@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Download, MessageCircle, ClipboardList, AlertCircle, CheckCircle2, Clock, FileDown, FileText } from 'lucide-react'
-import { fmtDate, fmtDateTime } from '../utils/date'
+import { fmtDate, fmtDateTime, fmtMoney } from '../utils/date'
 import toast from 'react-hot-toast'
 import { getInvoices, getInvoicePdf, getWhatsappLink } from '../api/invoices'
 import PageHeader from '../components/ui/PageHeader'
@@ -34,8 +34,6 @@ const exportCsv = (rows) => {
   URL.revokeObjectURL(url)
 }
 
-const fmt = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN', { minimumFractionDigits: 2 })}`
-const fmtShort = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN', { minimumFractionDigits: 0 })}`
 
 const STATUS_OPTIONS = ['pendiente', 'parcial', 'pagada', 'anulada']
 
@@ -113,14 +111,14 @@ export default function Invoices() {
     {
       key: 'total',
       label: 'Total',
-      render: (r) => <span className="font-semibold">{fmtShort(r.total)}</span>,
+      render: (r) => <span className="font-semibold">{fmtMoney(r.total)}</span>,
     },
     {
       key: 'balance',
       label: 'Saldo',
       render: (r) => (
         <span className={Number(r.balance) > 0 ? 'text-red-600 font-semibold' : 'text-gray-400'}>
-          {fmtShort(r.balance)}
+          {fmtMoney(r.balance)}
         </span>
       ),
     },
@@ -168,7 +166,7 @@ export default function Invoices() {
               <span className="text-xs text-gray-500">Total facturas</span>
             </div>
             <p className="text-xl font-bold text-gray-900">{summary.total_count ?? 0}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{fmtShort(summary.total_amount)}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{fmtMoney(summary.total_amount)}</p>
           </div>
 
           <div
@@ -179,7 +177,7 @@ export default function Invoices() {
               <AlertCircle size={16} className="text-red-400" />
               <span className="text-xs text-gray-500">Por cobrar (pendiente)</span>
             </div>
-            <p className="text-xl font-bold text-red-600">{fmtShort(summary.pending_balance)}</p>
+            <p className="text-xl font-bold text-red-600">{fmtMoney(summary.pending_balance)}</p>
             <p className="text-xs text-gray-400 mt-0.5">Clic para filtrar</p>
           </div>
 
@@ -191,7 +189,7 @@ export default function Invoices() {
               <Clock size={16} className="text-yellow-500" />
               <span className="text-xs text-gray-500">Saldo parcial</span>
             </div>
-            <p className="text-xl font-bold text-yellow-600">{fmtShort(summary.partial_balance)}</p>
+            <p className="text-xl font-bold text-yellow-600">{fmtMoney(summary.partial_balance)}</p>
             <p className="text-xs text-gray-400 mt-0.5">{summary.uncollected_count ?? 0} facturas abiertas</p>
           </div>
 
@@ -204,7 +202,7 @@ export default function Invoices() {
               <span className="text-xs text-gray-500">Cobrado (saldo total)</span>
             </div>
             <p className="text-xl font-bold text-green-600">
-              {fmtShort(Number(summary.total_amount ?? 0) - Number(summary.total_balance ?? 0))}
+              {fmtMoney(Number(summary.total_amount ?? 0) - Number(summary.total_balance ?? 0))}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">Clic para ver pagadas</p>
           </div>

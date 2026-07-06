@@ -59,13 +59,13 @@ export default function Calendar() {
   }, [])
 
   // ── Queries ────────────────────────────────────────────────────────────
-  const { data: appointments } = useQuery({
+  const { data: appointments, isFetching: fetchingApts } = useQuery({
     queryKey: ['appointments', range],
     queryFn:  () => getAppointments({ start: range.start, end: range.end }).then(r => r.data),
     enabled:  !!(range.start && range.end),
   })
 
-  const { data: calendarWOs } = useQuery({
+  const { data: calendarWOs, isFetching: fetchingWOs } = useQuery({
     queryKey: ['calendar-work-orders', range],
     queryFn:  () => getWorkOrders({
       promised_from: range.start?.slice(0, 10),
@@ -74,6 +74,8 @@ export default function Calendar() {
     }).then(r => r.data.data),
     enabled: !!(range.start && range.end) && showWOs,
   })
+
+  const calendarLoading = fetchingApts || fetchingWOs
 
   // ── Mutations ──────────────────────────────────────────────────────────
   const remind = useMutation({
@@ -224,7 +226,18 @@ export default function Calendar() {
       </div>
 
       {/* Calendario ──────────────────────────────────────────────────────── */}
-      <div className="card p-4">
+      <div className="card p-4 relative">
+        {calendarLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 rounded-2xl">
+            <div className="flex items-center gap-2 text-gray-500 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
+              <svg className="animate-spin w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              <span className="text-sm font-medium">Cargando eventos...</span>
+            </div>
+          </div>
+        )}
         <FullCalendar
           ref={calRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}

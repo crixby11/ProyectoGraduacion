@@ -12,7 +12,7 @@ import { getAppointments } from '../api/appointments'
 import { VEHICLE_CATALOG, BRANDS } from '../data/vehicleCatalog'
 import Modal from '../components/ui/Modal'
 import StatusBadge from '../components/ui/StatusBadge'
-import { fmtDate } from '../utils/date'
+import { fmtDate, fmtMoney } from '../utils/date'
 import { isValidPhone, isValidCedula, fmtPhone, fmtCedula } from '../utils/hn'
 
 const APT_STATUS = {
@@ -52,7 +52,6 @@ const vehicleSchema = z.object({
   description: z.string().optional(),
 })
 
-const fmt = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN')}`
 
 export default function CustomerDetail() {
   const { id } = useParams()
@@ -200,7 +199,7 @@ export default function CustomerDetail() {
                       </td>
                       <td className="py-2 text-gray-600">{[wo.vehicle_plate, wo.vehicle_brand, wo.vehicle_model].filter(Boolean).join(' ') || '—'}</td>
                       <td className="py-2"><StatusBadge status={wo.status} /></td>
-                      <td className="py-2 text-right font-medium">{fmt(wo.total)}</td>
+                      <td className="py-2 text-right font-medium">{fmtMoney(wo.total)}</td>
                     </tr>
                   ))}
                 </tbody>

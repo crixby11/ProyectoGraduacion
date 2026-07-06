@@ -17,9 +17,7 @@ import StatusBadge from '../../components/ui/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 
-import { fmtDate, fmtDateTime } from '../../utils/date'
-
-const fmt = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN')}`
+import { fmtDate, fmtDateTime, fmtMoney } from '../../utils/date'
 
 const STATUSES = ['recibido', 'diagnostico', 'en_progreso', 'listo', 'entregado', 'cancelado']
 
@@ -40,7 +38,9 @@ export default function WorkOrderDetail() {
   const [brandMode,    setBrandMode]    = useState('list')
   const [modelMode,    setModelMode]    = useState('list')
   // { kind: 'svc'|'part', id, name, hasInventory? }
-  const [confirmDel,   setConfirmDel]   = useState(null)
+  const [confirmDel,    setConfirmDel]    = useState(null)
+  // 'entregado' | 'cancelado' | null
+  const [confirmStatus, setConfirmStatus] = useState(null)
 
   // Ref para cerrar el dropdown de estado al hacer click afuera
   const statusRef = useRef(null)
@@ -325,7 +325,14 @@ export default function WorkOrderDetail() {
                 {STATUSES.map((s) => (
                   <button
                     key={s}
-                    onClick={() => mutStatus.mutate(s)}
+                    onClick={() => {
+                      if (s === 'entregado' || s === 'cancelado') {
+                        setStatusOpen(false)
+                        setConfirmStatus(s)
+                      } else {
+                        mutStatus.mutate(s)
+                      }
+                    }}
                     className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${wo.status === s ? 'font-semibold text-primary-600' : 'text-gray-700'}`}
                   >
                     <StatusBadge status={s} />
@@ -395,10 +402,10 @@ export default function WorkOrderDetail() {
           <div className="card p-4">
             <h3 className="font-semibold text-gray-800 mb-3">Totales</h3>
             <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">Servicios</span><span>{fmt(wo.subtotal_services)}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Repuestos</span><span>{fmt(wo.subtotal_parts)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Servicios</span><span>{fmtMoney(wo.subtotal_services)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Repuestos</span><span>{fmtMoney(wo.subtotal_parts)}</span></div>
               <div className="flex justify-between font-semibold text-base border-t border-gray-200 pt-1.5 mt-1.5">
-                <span>Total</span><span className="text-primary-700">{fmt(wo.total)}</span>
+                <span>Total</span><span className="text-primary-700">{fmtMoney(wo.total)}</span>
               </div>
             </div>
           </div>
@@ -436,12 +443,12 @@ export default function WorkOrderDetail() {
               {/* Resumen de montos */}
               <div className="space-y-1 text-sm border-t border-gray-100 pt-2">
                 {wo.invoice.discount_amount > 0 && (
-                  <div className="flex justify-between text-gray-500"><span>Descuento</span><span>- {fmt(wo.invoice.discount_amount)}</span></div>
+                  <div className="flex justify-between text-gray-500"><span>Descuento</span><span>- {fmtMoney(wo.invoice.discount_amount)}</span></div>
                 )}
                 {wo.invoice.tax_amount > 0 && (
-                  <div className="flex justify-between text-gray-500"><span>Impuesto</span><span>{fmt(wo.invoice.tax_amount)}</span></div>
+                  <div className="flex justify-between text-gray-500"><span>Impuesto</span><span>{fmtMoney(wo.invoice.tax_amount)}</span></div>
                 )}
-                <div className="flex justify-between font-semibold text-primary-700"><span>Total factura</span><span>{fmt(wo.invoice.total)}</span></div>
+                <div className="flex justify-between font-semibold text-primary-700"><span>Total factura</span><span>{fmtMoney(wo.invoice.total)}</span></div>
               </div>
 
               {/* Pagos registrados */}
@@ -450,7 +457,7 @@ export default function WorkOrderDetail() {
                   {invoicePayments.map((p) => (
                     <div key={p.id} className="flex justify-between text-sm">
                       <span className="text-gray-500 capitalize">{p.method} <span className="text-xs text-gray-400">{fmtDate(p.payment_date)}</span></span>
-                      <span className="text-green-600 font-medium">{fmt(p.amount)}</span>
+                      <span className="text-green-600 font-medium">{fmtMoney(p.amount)}</span>
                     </div>
                   ))}
                 </div>
@@ -461,7 +468,7 @@ export default function WorkOrderDetail() {
                   {wo.invoice.balance > 0 ? 'Saldo pendiente' : 'Pagado'}
                 </span>
                 <span className={wo.invoice.balance > 0 ? 'text-red-600' : 'text-green-600'}>
-                  {fmt(wo.invoice.balance)}
+                  {fmtMoney(wo.invoice.balance)}
                 </span>
               </div>
 
@@ -522,8 +529,8 @@ export default function WorkOrderDetail() {
                     <tr key={s.id} className="border-b border-gray-50 group">
                       <td className="py-1.5">{s.service_name}<br /><span className="text-xs text-gray-400">{s.employee?.name}</span></td>
                       <td className="text-right">{s.hours}h</td>
-                      <td className="text-right">{fmt(s.hourly_rate)}</td>
-                      <td className="text-right font-medium">{fmt(s.subtotal)}</td>
+                      <td className="text-right">{fmtMoney(s.hourly_rate)}</td>
+                      <td className="text-right font-medium">{fmtMoney(s.subtotal)}</td>
                       <td className="text-right py-1.5 pl-2">
                         <div className="flex gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -568,8 +575,8 @@ export default function WorkOrderDetail() {
                     <tr key={p.id} className="border-b border-gray-50 group">
                       <td className="py-1.5">{p.part_name}<br /><span className="text-xs text-gray-400 font-mono">{p.part_sku}</span></td>
                       <td className="text-right">{p.quantity}</td>
-                      <td className="text-right">{fmt(p.unit_price)}</td>
-                      <td className="text-right font-medium">{fmt(p.subtotal)}</td>
+                      <td className="text-right">{fmtMoney(p.unit_price)}</td>
+                      <td className="text-right font-medium">{fmtMoney(p.subtotal)}</td>
                       <td className="text-right py-1.5 pl-2">
                         <div className="flex gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -933,6 +940,21 @@ export default function WorkOrderDetail() {
         </form>
       </Modal>
 
+      {/* Confirmación de cambio a estado final */}
+      <ConfirmDialog
+        open={!!confirmStatus}
+        onClose={() => setConfirmStatus(null)}
+        title={confirmStatus === 'entregado' ? 'Marcar como entregado' : 'Cancelar orden de trabajo'}
+        message={confirmStatus === 'entregado'
+          ? 'Confirma que el vehículo fue entregado al cliente. Esto cerrará la orden.'
+          : '¿Seguro que deseas cancelar esta orden? Esta acción es difícil de revertir.'}
+        confirmText={confirmStatus === 'entregado' ? 'Sí, entregar' : 'Sí, cancelar OT'}
+        loadingText="Actualizando..."
+        confirmClass={confirmStatus === 'cancelado' ? 'btn-danger' : 'btn-primary'}
+        loading={mutStatus.isPending}
+        onConfirm={() => { mutStatus.mutate(confirmStatus); setConfirmStatus(null) }}
+      />
+
       {/* Confirmación de eliminación (servicios y repuestos) */}
       <ConfirmDialog
         open={!!confirmDel}
@@ -957,7 +979,7 @@ export default function WorkOrderDetail() {
         <form onSubmit={handlePay((d) => mutAddPayment.mutate(d))} className="space-y-4">
           <div className="flex justify-between text-sm bg-gray-50 rounded-lg p-3">
             <span className="text-gray-500">Saldo pendiente</span>
-            <span className="font-semibold text-red-600">{fmt(wo?.invoice?.balance)}</span>
+            <span className="font-semibold text-red-600">{fmtMoney(wo?.invoice?.balance)}</span>
           </div>
           <div>
             <label className="label">Método de pago *</label>

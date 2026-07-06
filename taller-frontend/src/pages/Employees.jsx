@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { getEmployees, createEmployee, updateEmployee } from '../api/employees'
 import { isValidPhone, fmtPhone } from '../utils/hn'
+import { fmtMoney } from '../utils/date'
 import PageHeader from '../components/ui/PageHeader'
 import SearchInput from '../components/ui/SearchInput'
 import { Table, Pagination } from '../components/ui/Table'
@@ -45,7 +46,6 @@ const schema = z.object({
   notes:            z.string().optional(),
 })
 
-const fmt = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN')}`
 
 export default function Employees() {
   const qc = useQueryClient()
@@ -87,7 +87,7 @@ export default function Employees() {
     { key: 'name', label: 'Nombre', render: (r) => <Link to={`/employees/${r.id}`} className="font-medium text-primary-700 hover:underline">{r.name}</Link> },
     { key: 'specialty', label: 'Especialidad' },
     { key: 'phone', label: 'Teléfono' },
-    { key: 'biweekly_salary', label: 'Salario quincenal', render: (r) => fmt(r.biweekly_salary) },
+    { key: 'biweekly_salary', label: 'Salario quincenal', render: (r) => fmtMoney(r.biweekly_salary) },
     {
       key: 'active', label: 'Estado',
       render: (r) => <span className={`badge ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{r.active ? 'Activo' : 'Inactivo'}</span>,

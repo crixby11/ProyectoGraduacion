@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Plus, Edit2, Settings } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getServices, createService, updateService } from '../api/services'
+import { fmtMoney } from '../utils/date'
 import PageHeader from '../components/ui/PageHeader'
 import SearchInput from '../components/ui/SearchInput'
 import { Table, Pagination } from '../components/ui/Table'
@@ -19,7 +20,6 @@ const schema = z.object({
   active: z.boolean().optional(),
 })
 
-const fmt = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN')}`
 
 export default function Services() {
   const qc = useQueryClient()
@@ -58,7 +58,7 @@ export default function Services() {
     { key: 'name', label: 'Servicio', render: (r) => <span className="font-medium">{r.name}</span> },
     { key: 'description', label: 'Descripción', render: (r) => <span className="text-gray-500 text-xs">{r.description}</span> },
     { key: 'estimated_hours', label: 'Horas est.', render: (r) => `${r.estimated_hours}h` },
-    { key: 'base_price', label: 'Precio base', render: (r) => fmt(r.base_price) },
+    { key: 'base_price', label: 'Precio base', render: (r) => fmtMoney(r.base_price) },
     {
       key: 'active', label: 'Estado',
       render: (r) => <span className={`badge ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{r.active ? 'Activo' : 'Inactivo'}</span>,

@@ -7,6 +7,7 @@ import {
 } from 'recharts'
 import { BarChart2, Trophy, Clock, DollarSign, Gift } from 'lucide-react'
 import { getEmployeeStats } from '../api/employees'
+import { fmtMoney } from '../utils/date'
 import PageHeader from '../components/ui/PageHeader'
 
 const PERIODS = [
@@ -22,7 +23,6 @@ const fmtMonth = (yyyyMm) => {
   const [y, m] = yyyyMm.split('-')
   return `${MONTHS_ES[parseInt(m, 10) - 1]} ${y.slice(2)}`
 }
-const fmt  = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN')}`
 const fmtH = (n) => `${Number(n ?? 0).toFixed(1)} h`
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16']
@@ -40,7 +40,7 @@ function CustomTooltip({ active, payload, label, type }) {
             <span className="text-gray-500">{p.name}</span>
           </span>
           <span className="font-semibold text-gray-800">
-            {type === 'revenue' ? fmt(p.value) : type === 'hours' ? fmtH(p.value) : p.value}
+            {type === 'revenue' ? fmtMoney(p.value) : type === 'hours' ? fmtH(p.value) : p.value}
           </span>
         </div>
       ))}
@@ -135,10 +135,10 @@ export default function EmployeeStats() {
       {/* KPIs globales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Ingresos generados', value: fmt(totals.revenue), icon: DollarSign, color: 'bg-blue-500' },
+          { label: 'Ingresos generados', value: fmtMoney(totals.revenue), icon: DollarSign, color: 'bg-blue-500' },
           { label: 'Horas trabajadas',   value: fmtH(totals.hours),  icon: Clock,       color: 'bg-emerald-500' },
           { label: 'OTs atendidas',      value: totals.ots,           icon: Trophy,      color: 'bg-amber-500' },
-          { label: 'Total bonos',        value: fmt(totals.bonuses),  icon: Gift,        color: 'bg-violet-500' },
+          { label: 'Total bonos',        value: fmtMoney(totals.bonuses),  icon: Gift,        color: 'bg-violet-500' },
         ].map((k) => (
           <div key={k.label} className="card p-4 flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl ${k.color} flex items-center justify-center shrink-0`}>

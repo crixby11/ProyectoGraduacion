@@ -12,7 +12,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { fmtDate } from '../utils/date'
+import { fmtDate, fmtMoney } from '../utils/date'
 import { isValidPhone, fmtPhone } from '../utils/hn'
 import toast from 'react-hot-toast'
 import {
@@ -43,7 +43,6 @@ const bonusSchema = z.object({
   bonus_month:   z.string().regex(/^\d{4}-\d{2}$/, 'Selecciona un mes'),
 })
 
-const fmt  = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN')}`
 const fmtH = (n) => `${Number(n ?? 0).toFixed(1)} h`
 const currentMonth = () => new Date().toISOString().slice(0, 7)
 
@@ -58,7 +57,7 @@ function StatTooltip({ active, payload, label, money }) {
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
             <span className="text-gray-500">{p.name}</span>
           </span>
-          <span className="font-bold text-gray-800">{money ? fmt(p.value) : p.value}</span>
+          <span className="font-bold text-gray-800">{money ? fmtMoney(p.value) : p.value}</span>
         </div>
       ))}
     </div>
@@ -267,7 +266,7 @@ export default function EmployeeDetail() {
               )}
               <div className="pt-1 border-t border-gray-100">
                 <dt className="text-gray-500">Salario quincenal</dt>
-                <dd className="text-lg font-semibold text-primary-700">{fmt(employee.biweekly_salary)}</dd>
+                <dd className="text-lg font-semibold text-primary-700">{fmtMoney(employee.biweekly_salary)}</dd>
               </div>
               {employee.notes && (
                 <div className="pt-1 border-t border-gray-100">
@@ -300,7 +299,7 @@ export default function EmployeeDetail() {
               </div>
               <div className="flex justify-between pt-1 border-t border-gray-100">
                 <dt className="text-gray-500">Bonos recibidos</dt>
-                <dd className="font-semibold text-primary-700">{fmt(totalBonuses)}</dd>
+                <dd className="font-semibold text-primary-700">{fmtMoney(totalBonuses)}</dd>
               </div>
             </dl>
           </div>
@@ -357,7 +356,7 @@ export default function EmployeeDetail() {
                       </td>
                       <td className="py-2 text-gray-600">{wo.service_type ?? '—'}</td>
                       <td className="py-2"><StatusBadge status={wo.status} /></td>
-                      <td className="py-2 text-right font-medium">{fmt(wo.total)}</td>
+                      <td className="py-2 text-right font-medium">{fmtMoney(wo.total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -397,7 +396,7 @@ export default function EmployeeDetail() {
                           <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
                             {fmtMonth(monthKey)}
                           </span>
-                          <span className="text-xs font-semibold text-primary-700">{fmt(monthTotal)}</span>
+                          <span className="text-xs font-semibold text-primary-700">{fmtMoney(monthTotal)}</span>
                         </div>
                         {/* Filas del mes */}
                         <div className="rounded-xl border border-gray-100 overflow-hidden">
@@ -413,7 +412,7 @@ export default function EmployeeDetail() {
                                       </Link>
                                     ) : <span className="text-gray-300 text-xs">—</span>}
                                   </td>
-                                  <td className="py-2 px-3 text-right font-semibold text-primary-700 whitespace-nowrap">{fmt(b.amount)}</td>
+                                  <td className="py-2 px-3 text-right font-semibold text-primary-700 whitespace-nowrap">{fmtMoney(b.amount)}</td>
                                   <td className="py-2 pr-2 w-8">
                                     <button onClick={() => openEditBonus(b)} className="btn-ghost p-1 text-gray-400 hover:text-primary-600" title="Editar">
                                       <Edit2 size={13} />
@@ -431,7 +430,7 @@ export default function EmployeeDetail() {
                 {/* Total general */}
                 <div className="flex justify-between items-center pt-2 border-t border-gray-200 px-1">
                   <span className="text-sm text-gray-500 font-medium">Total bonos</span>
-                  <span className="font-bold text-primary-700">{fmt(totalBonuses)}</span>
+                  <span className="font-bold text-primary-700">{fmtMoney(totalBonuses)}</span>
                 </div>
               </div>
             )}
@@ -468,8 +467,8 @@ export default function EmployeeDetail() {
               {[
                 { label: 'OTs atendidas',   value: stats.totals?.ot_count ?? 0,       color: 'text-blue-600',   bg: 'bg-blue-50' },
                 { label: 'Horas trabajadas', value: fmtH(stats.totals?.total_hours),   color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                { label: 'Ingresos totales', value: fmt(stats.totals?.total_revenue),  color: 'text-primary-700', bg: 'bg-primary-50' },
-                { label: 'Total bonos',      value: fmt(stats.total_bonuses),           color: 'text-violet-600',  bg: 'bg-violet-50' },
+                { label: 'Ingresos totales', value: fmtMoney(stats.totals?.total_revenue),  color: 'text-primary-700', bg: 'bg-primary-50' },
+                { label: 'Total bonos',      value: fmtMoney(stats.total_bonuses),           color: 'text-violet-600',  bg: 'bg-violet-50' },
               ].map((k) => (
                 <div key={k.label} className={`rounded-xl p-3 ${k.bg}`}>
                   <p className="text-xs text-gray-500 mb-0.5">{k.label}</p>

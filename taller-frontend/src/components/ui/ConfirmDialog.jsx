@@ -1,7 +1,12 @@
 import Modal from './Modal'
 import { AlertTriangle } from 'lucide-react'
 
-export default function ConfirmDialog({ open, onClose, onConfirm, title = '¿Confirmar?', message, loading }) {
+export default function ConfirmDialog({
+  open, onClose, onConfirm,
+  title = '¿Confirmar?', message, loading,
+  confirmText = 'Eliminar', loadingText = 'Procesando...',
+  confirmClass = 'btn-danger',
+}) {
   return (
     <Modal open={open} onClose={onClose} title=" " size="sm">
       <div className="text-center py-2">
@@ -12,8 +17,8 @@ export default function ConfirmDialog({ open, onClose, onConfirm, title = '¿Con
         {message && <p className="text-sm text-gray-500 mb-6">{message}</p>}
         <div className="flex gap-3 justify-center">
           <button onClick={onClose} className="btn-secondary">Cancelar</button>
-          <button onClick={onConfirm} disabled={loading} className="btn-danger">
-            {loading ? 'Eliminando...' : 'Eliminar'}
+          <button onClick={onConfirm} disabled={loading} className={confirmClass}>
+            {loading ? loadingText : confirmText}
           </button>
         </div>
       </div>

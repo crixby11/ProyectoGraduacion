@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Plus, Edit2, TrendingUp, AlertTriangle, Clock, ArrowDownCircle, ArrowUpCircle, Package } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getInventory, createInventoryItem, updateInventoryItem, adjustInventory, getCategories, getInventoryMovements } from '../api/inventory'
+import { fmtMoney } from '../utils/date'
 import PageHeader from '../components/ui/PageHeader'
 import SearchInput from '../components/ui/SearchInput'
 import { Table, Pagination } from '../components/ui/Table'
@@ -54,7 +55,6 @@ const adjustSchema = z.object({
   reason: z.string().optional(),
 })
 
-const fmt = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN')}`
 
 export default function Inventory() {
   const qc = useQueryClient()
@@ -156,7 +156,7 @@ export default function Inventory() {
         </div>
       ),
     },
-    { key: 'sale_price', label: 'Precio venta', render: (r) => fmt(r.sale_price) },
+    { key: 'sale_price', label: 'Precio venta', render: (r) => fmtMoney(r.sale_price) },
     {
       key: 'actions', label: '', width: '140px',
       render: (r) => (

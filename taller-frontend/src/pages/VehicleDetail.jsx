@@ -8,6 +8,7 @@ import { ArrowLeft, Edit2, User, ClipboardList, ExternalLink } from 'lucide-reac
 import toast from 'react-hot-toast'
 import { getVehicle, updateVehicle } from '../api/vehicles'
 import { getCustomers } from '../api/customers'
+import { fmtMoney } from '../utils/date'
 import Modal from '../components/ui/Modal'
 import StatusBadge from '../components/ui/StatusBadge'
 
@@ -24,7 +25,6 @@ const schema = z.object({
   description: z.string().optional(),
 })
 
-const fmt = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN')}`
 
 export default function VehicleDetail() {
   const { id } = useParams()
@@ -142,7 +142,7 @@ export default function VehicleDetail() {
                       </td>
                       <td className="py-2 text-gray-600">{wo.service_type ?? '—'}</td>
                       <td className="py-2"><StatusBadge status={wo.status} /></td>
-                      <td className="py-2 text-right font-medium">{fmt(wo.total)}</td>
+                      <td className="py-2 text-right font-medium">{fmtMoney(wo.total)}</td>
                     </tr>
                   ))}
                 </tbody>

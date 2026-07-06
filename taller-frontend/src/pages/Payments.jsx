@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, Banknote, CreditCard, ArrowLeftRight, MoreHorizontal, Download, DollarSign } from 'lucide-react'
-import { fmtDate } from '../utils/date'
+import { fmtDate, fmtMoney } from '../utils/date'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { getPayments, createPayment } from '../api/payments'
@@ -22,7 +22,6 @@ const schema = z.object({
   notes: z.string().optional(),
 })
 
-const fmt = (n) => `Lps ${Number(n ?? 0).toLocaleString('es-HN', { minimumFractionDigits: 2 })}`
 
 const METHOD_LABELS = {
   efectivo: 'Efectivo',
@@ -165,7 +164,7 @@ export default function Payments() {
     {
       key: 'amount',
       label: 'Monto',
-      render: (r) => <span className="font-semibold text-green-600">{fmt(r.amount)}</span>,
+      render: (r) => <span className="font-semibold text-green-600">{fmtMoney(r.amount)}</span>,
     },
     { key: 'reference', label: 'Referencia', render: (r) => <span className="text-gray-400 text-xs font-mono">{r.reference ?? '—'}</span> },
   ]
@@ -202,7 +201,7 @@ export default function Payments() {
                   <Icon size={16} className="text-gray-400" />
                   <span className="text-xs text-gray-500 capitalize">{METHOD_LABELS[m]}</span>
                 </div>
-                <p className="text-lg font-bold text-gray-900">{fmt(val)}</p>
+                <p className="text-lg font-bold text-gray-900">{fmtMoney(val)}</p>
               </div>
             )
           })}
@@ -240,7 +239,7 @@ export default function Payments() {
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-500">Total cobrado{method ? ` (${METHOD_LABELS[method]})` : ''}</p>
-            <p className="text-2xl font-bold text-green-600">{fmt(summary.total ?? 0)}</p>
+            <p className="text-2xl font-bold text-green-600">{fmtMoney(summary.total ?? 0)}</p>
           </div>
         </div>
       )}
@@ -258,7 +257,7 @@ export default function Payments() {
               <option value="">Seleccionar factura...</option>
               {(pendingInvoices ?? []).map((inv) => (
                 <option key={inv.id} value={inv.id}>
-                  {inv.number} — Saldo: {fmt(inv.balance)}
+                  {inv.number} — Saldo: {fmtMoney(inv.balance)}
                   {inv.work_order ? ` (${inv.work_order.number})` : ''}
                 </option>
               ))}
