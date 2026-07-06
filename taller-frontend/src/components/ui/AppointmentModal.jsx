@@ -183,7 +183,8 @@ export default function AppointmentModal({
     if (durMins > 0) {
       const d = new Date(`${start_at}:00`)
       d.setMinutes(d.getMinutes() + durMins)
-      end_at = d.toISOString().slice(0, 16)
+      const pad = n => String(n).padStart(2, '0')
+      end_at = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
     }
     save.mutate({
       title: title.trim(),

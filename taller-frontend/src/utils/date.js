@@ -22,11 +22,22 @@ export function fmtDateShort(val) {
   return fmtDate(val, { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
-/** Datetime completo (para campos received_at, created_at, etc.) */
+/** Datetime completo (fecha + hora) para campos received_at, created_at, etc. */
 export function fmtDateTime(val) {
   if (!val) return '—'
-  const d = new Date(val)
-  return isNaN(d) ? '—' : d.toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric' })
+  // Normaliza "YYYY-MM-DD HH:MM:SS" y "...Z" a "YYYY-MM-DDTHH:MM"
+  const s = String(val).replace(' ', 'T').slice(0, 16)
+  const [datePart, timePart] = s.split('T')
+  if (!datePart) return '—'
+  // Parsea la fecha al mediodía local para evitar desfase de zona horaria
+  const d = new Date(datePart + 'T12:00:00')
+  if (isNaN(d)) return '—'
+  const dateStr = d.toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric' })
+  if (!timePart) return dateStr
+  const [h, m] = timePart.split(':').map(Number)
+  const ampm = h < 12 ? 'AM' : 'PM'
+  const h12  = h % 12 || 12
+  return `${dateStr}, ${h12}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
 /**

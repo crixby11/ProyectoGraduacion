@@ -100,7 +100,7 @@ class WorkOrderService
                 $item = Inventory::lockForUpdate()->findOrFail($data['inventory_id']);
 
                 if ($item->stock < $data['quantity']) {
-                    throw new \Exception("Stock insuficiente para {$item->name}");
+                    abort(422, "Stock insuficiente para «{$item->name}». Disponible: {$item->stock}");
                 }
 
                 $stockBefore = $item->stock;
@@ -143,7 +143,7 @@ class WorkOrderService
                 $diff = $newQty - $oldQty;
 
                 if ($diff > 0 && $item->stock < $diff) {
-                    throw new \Exception("Stock insuficiente para {$item->name}");
+                    abort(422, "Stock insuficiente para «{$item->name}». Disponible: {$item->stock}");
                 }
 
                 $stockBefore = $item->stock;

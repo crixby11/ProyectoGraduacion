@@ -64,10 +64,12 @@ class PaymentController extends Controller
         ]);
 
         return DB::transaction(function () use ($data, $request) {
-            $invoice = Invoice::with('workOrder')->findOrFail($data['invoice_id']);
+            $invoice = Invoice::lockForUpdate()->with('workOrder')->findOrFail($data['invoice_id']);
 
             if ($data['amount'] > $invoice->balance) {
-                return response()->json(['message' => 'El monto supera el saldo pendiente'], 422);
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'amount' => ['El monto supera el saldo pendiente de Lps ' . number_format($invoice->balance, 2)],
+                ]);
             }
 
             $payment = Payment::create(array_merge($data, [

@@ -26,10 +26,16 @@ export function useConvertToOT({ onClose } = {}) {
         problem:        apt.notes          || apt.description      || undefined,
         received_at:    apt.start_at,
       })
-      await updateAppointment(apt.id, {
-        status:        'completada',
-        work_order_id: woRes.data.id,
-      })
+      // La OT ya existe — el update de la cita es best-effort.
+      // Si falla, la OT sigue siendo válida y se navega a ella de todas formas.
+      try {
+        await updateAppointment(apt.id, {
+          status:        'completada',
+          work_order_id: woRes.data.id,
+        })
+      } catch {
+        toast.error('OT creada, pero no se pudo actualizar el estado de la cita', { duration: 5000 })
+      }
       return woRes.data
     },
     onSuccess: (wo) => {
