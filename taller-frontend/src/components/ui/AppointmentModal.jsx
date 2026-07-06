@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -57,8 +57,19 @@ export default function AppointmentModal({
   onReminder,
 }) {
   const qc = useQueryClient()
-  const [isWalkIn, setIsWalkIn]       = useState(false)
-  const [quickCreate, setQuickCreate] = useState(false)
+  const [isWalkIn, setIsWalkIn]               = useState(false)
+  const [quickCreate, setQuickCreate]         = useState(false)
+  const [customerSearch, setCustomerSearch]   = useState('')
+  const [showCustDrop, setShowCustDrop]       = useState(false)
+  const custDropRef = useRef(null)
+
+  // Cierra el dropdown al hacer click fuera
+  useEffect(() => {
+    if (!showCustDrop) return
+    const handler = (e) => { if (!custDropRef.current?.contains(e.target)) setShowCustDrop(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showCustDrop])
 
   const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = useForm()
   const { register: regC, handleSubmit: handleC, reset: resetC, watch: watchC } = useForm()
@@ -100,6 +111,8 @@ export default function AppointmentModal({
       })
     }
     setQuickCreate(false)
+    setShowCustDrop(false)
+    setCustomerSearch(initial?.customer?.name ?? '')
   }, [open, initial, defaultDate, reset])
 
   // ── Queries ───────────────────────────────────────────────────────────
@@ -120,6 +133,16 @@ export default function AppointmentModal({
     queryFn: () => getVehicles({ customer_id: watchedCustomerId, per_page: 50 }).then(r => r.data.data),
     enabled: !!watchedCustomerId && !isWalkIn && open,
   })
+
+  // Clientes filtrados para el combobox (máx. 15 resultados)
+  const filteredCustomers = useMemo(() => {
+    const q = customerSearch.trim().toLowerCase()
+    const list = customers ?? []
+    if (!q) return list.slice(0, 15)
+    return list
+      .filter(c => c.name?.toLowerCase().includes(q) || c.phone?.includes(customerSearch.trim()))
+      .slice(0, 15)
+  }, [customers, customerSearch])
 
   // Detección de cliente duplicado por teléfono
   const dupCustomer = watchedPhone.replace(/\D/g, '').length >= 7
@@ -161,12 +184,15 @@ export default function AppointmentModal({
     setIsWalkIn(false)
     setValue('customer_name', '')
     setValue('customer_phone', '')
+    setCustomerSearch('')
   }
 
   const switchToWalkIn = () => {
     setIsWalkIn(true)
     setValue('customer_id', '')
     setValue('vehicle_id', '')
+    setCustomerSearch('')
+    setShowCustDrop(false)
     setQuickCreate(false)
   }
 
@@ -298,19 +324,63 @@ export default function AppointmentModal({
           {!isWalkIn ? (
             <div className="space-y-2">
               <div className="flex gap-2">
-                <select {...register('customer_id')} className="input flex-1" disabled={quickCreate}>
-                  <option value="">— Seleccionar cliente —</option>
-                  {(customers ?? []).map(c => (
-                    <option key={c.id} value={String(c.id)}>
-                      {c.name}{c.phone ? ` · ${c.phone}` : ''}
-                    </option>
-                  ))}
-                </select>
+                {/* Combobox con búsqueda incremental */}
+                <div className="relative flex-1" ref={custDropRef}>
+                  <input
+                    type="text"
+                    value={customerSearch}
+                    onChange={e => {
+                      setCustomerSearch(e.target.value)
+                      if (watchedCustomerId) setValue('customer_id', '')
+                      setShowCustDrop(true)
+                    }}
+                    onFocus={() => setShowCustDrop(true)}
+                    placeholder={customers ? 'Buscar por nombre o teléfono...' : 'Cargando clientes...'}
+                    disabled={quickCreate}
+                    autoComplete="off"
+                    className="input w-full"
+                  />
+                  {/* Campo oculto que guarda el ID seleccionado */}
+                  <input type="hidden" {...register('customer_id')} />
+
+                  {/* Dropdown de resultados */}
+                  {showCustDrop && !quickCreate && (
+                    <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+                      {!customers ? (
+                        <p className="px-3 py-2.5 text-sm text-gray-400">Cargando...</p>
+                      ) : filteredCustomers.length === 0 ? (
+                        <p className="px-3 py-2.5 text-sm text-gray-400">Sin coincidencias</p>
+                      ) : (
+                        filteredCustomers.map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onMouseDown={e => {
+                              e.preventDefault()
+                              setValue('customer_id', String(c.id))
+                              setValue('vehicle_id', '')
+                              setCustomerSearch(c.name + (c.phone ? ` · ${c.phone}` : ''))
+                              setShowCustDrop(false)
+                            }}
+                            className={`w-full text-left px-3 py-2 text-sm border-b border-gray-50 last:border-0 ${
+                              String(c.id) === String(watchedCustomerId)
+                                ? 'bg-primary-50 text-primary-700 font-medium'
+                                : 'hover:bg-gray-50 text-gray-700'
+                            }`}
+                          >
+                            <span className="block">{c.name}</span>
+                            {c.phone && <span className="text-xs text-gray-400">{c.phone}</span>}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
                 {!quickCreate && (
                   <button
                     type="button"
                     onClick={() => setQuickCreate(true)}
-                    className="btn-secondary text-xs whitespace-nowrap flex items-center gap-1"
+                    className="btn-secondary text-xs whitespace-nowrap flex items-center gap-1 shrink-0"
                   >
                     <UserPlus size={13} /> Nuevo
                   </button>

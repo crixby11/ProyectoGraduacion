@@ -133,7 +133,27 @@ export default function WorkOrderDetail() {
 
   const mutAddPart = useMutation({
     mutationFn: (d) => addPart(id, d),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['work-order', id] }); toast.success('Repuesto agregado'); setPartModal(false); resetPart() },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['work-order', id] })
+      qc.invalidateQueries({ queryKey: ['inventory-all'] })
+      toast.success('Repuesto agregado')
+      setPartModal(false)
+      resetPart()
+      // Alerta si el stock cae al mínimo tras descontar
+      const { inventory_id, quantity, part_name } = res.data
+      if (inventory_id) {
+        const item = inventoryItems?.find(i => i.id === inventory_id)
+        if (item) {
+          const newStock = item.stock - quantity
+          if (newStock <= item.min_stock) {
+            toast(`⚠️ Stock bajo — ${part_name}: quedan ${newStock} unidad${newStock !== 1 ? 'es' : ''}`, {
+              duration: 7000,
+              style: { background: '#fef3c7', color: '#78350f', fontWeight: '500' },
+            })
+          }
+        }
+      }
+    },
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
 
@@ -157,7 +177,26 @@ export default function WorkOrderDetail() {
 
   const mutUpdatePart = useMutation({
     mutationFn: ({ partId, data }) => updatePart(id, partId, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['work-order', id] }); toast.success('Repuesto actualizado'); setEditPartModal(false) },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['work-order', id] })
+      qc.invalidateQueries({ queryKey: ['inventory-all'] })
+      toast.success('Repuesto actualizado')
+      setEditPartModal(false)
+      // Alerta si la cantidad aumentó y stock cae al mínimo
+      const woPart = res.data
+      if (editingPart?.inventory_id && woPart.quantity > editingPart.quantity) {
+        const item = inventoryItems?.find(i => i.id === editingPart.inventory_id)
+        if (item) {
+          const newStock = item.stock - (woPart.quantity - editingPart.quantity)
+          if (newStock <= item.min_stock) {
+            toast(`⚠️ Stock bajo — ${woPart.part_name}: quedan ${newStock} unidad${newStock !== 1 ? 'es' : ''}`, {
+              duration: 7000,
+              style: { background: '#fef3c7', color: '#78350f', fontWeight: '500' },
+            })
+          }
+        }
+      }
+    },
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
 
