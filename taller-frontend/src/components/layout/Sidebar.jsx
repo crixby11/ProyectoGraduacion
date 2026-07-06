@@ -5,6 +5,7 @@ import {
   Settings, Cog, X, BarChart2,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import logo from '../../assets/logo.jpeg'
 
 /* ── Grupos de navegación ──────────────────────────────────── */
 const navGroups = [
@@ -98,11 +99,13 @@ export default function Sidebar({ open, onClose }) {
         {/* ── Logo ── */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-white/[0.07]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-primary-600 flex items-center justify-center shrink-0 shadow-md">
-              <Wrench size={16} className="text-white" />
-            </div>
+            <img
+              src={logo}
+              alt="Logo Taller Hermanos Juarez"
+              className="w-9 h-9 rounded-xl object-contain bg-white p-0.5 shrink-0 shadow-md"
+            />
             <div>
-              <p className="text-sm font-bold text-white leading-tight">Taller Mecánico</p>
+              <p className="text-sm font-bold text-white leading-tight">Hermanos Juarez</p>
               <p className="text-[11px] text-white/35 leading-tight">Sistema de Gestión</p>
             </div>
           </div>

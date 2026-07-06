@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Wrench, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import logo from '../assets/logo.jpeg'
 import toast from 'react-hot-toast'
 
 const schema = z.object({
@@ -37,10 +38,10 @@ export default function Login() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-600 shadow-lg mb-5">
-            <Wrench size={28} className="text-white" strokeWidth={2} />
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-white shadow-md border border-gray-100 mb-5 p-2">
+            <img src={logo} alt="Taller Hermanos Juarez" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Taller Mecánico</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Taller Hermanos Juarez</h1>
           <p className="text-gray-500 text-sm mt-1">Sistema de Gestión</p>
         </div>
 

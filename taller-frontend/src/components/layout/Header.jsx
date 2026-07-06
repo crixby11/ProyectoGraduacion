@@ -29,7 +29,7 @@ const PAGE_TITLES = {
 function getTitle(pathname) {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname]
   const base = '/' + pathname.split('/')[1]
-  return PAGE_TITLES[base] ?? 'Taller Mecánico'
+  return PAGE_TITLES[base] ?? 'Taller Hermanos Juarez'
 }
 
 const pwdSchema = z.object({
