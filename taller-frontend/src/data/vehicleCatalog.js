@@ -1,0 +1,27 @@
+export const VEHICLE_CATALOG = {
+  Audi:            ['A3', 'A4', 'A5', 'A6', 'Q3', 'Q5', 'Q7', 'Q8'],
+  BMW:             ['Serie 1', 'Serie 2', 'Serie 3', 'Serie 5', 'Serie 7', 'X1', 'X2', 'X3', 'X5', 'X6'],
+  Chevrolet:       ['Aveo', 'Blazer', 'Camaro', 'Captiva', 'Colorado', 'Cruze', 'Equinox', 'Malibu', 'Silverado', 'Spark', 'Tahoe', 'Tracker', 'Trailblazer', 'Traverse', 'Trax'],
+  Daihatsu:        ['Boon', 'Rocky', 'Sirion', 'Terios'],
+  Dodge:           ['Challenger', 'Charger', 'Dart', 'Durango', 'Journey', 'Ram 1500', 'Ram 2500'],
+  Ford:            ['Bronco', 'EcoSport', 'Edge', 'Escape', 'Expedition', 'Explorer', 'F-150', 'Focus', 'Fusion', 'Mustang', 'Ranger', 'Territory'],
+  Honda:           ['Accord', 'City', 'Civic', 'CR-V', 'Element', 'Fit', 'HR-V', 'Jazz', 'Odyssey', 'Passport', 'Pilot', 'Ridgeline'],
+  Hyundai:         ['Accent', 'Creta', 'Elantra', 'Grand i10', 'i10', 'i20', 'Ioniq', 'Kona', 'Santa Fe', 'Sonata', 'Tucson', 'Venue'],
+  Isuzu:           ['D-Max', 'MU-X', 'Rodeo', 'Trooper'],
+  Jeep:            ['Cherokee', 'Compass', 'Gladiator', 'Grand Cherokee', 'Renegade', 'Wrangler'],
+  Kia:             ['Carnival', 'Cerato', 'Forte', 'K5', 'Picanto', 'Rio', 'Seltos', 'Sorento', 'Soul', 'Sportage', 'Stinger', 'Telluride'],
+  'Land Rover':    ['Defender', 'Discovery', 'Discovery Sport', 'Freelander', 'Range Rover', 'Range Rover Evoque', 'Range Rover Sport'],
+  Mazda:           ['BT-50', 'CX-3', 'CX-5', 'CX-9', 'Mazda2', 'Mazda3', 'Mazda6', 'MX-5'],
+  'Mercedes-Benz': ['Clase A', 'Clase C', 'Clase E', 'Clase GLA', 'Clase GLC', 'Clase GLE', 'Clase GLB', 'Clase S', 'Sprinter'],
+  Mitsubishi:      ['ASX', 'Eclipse', 'Eclipse Cross', 'Galant', 'L200', 'Lancer', 'Mirage', 'Montero', 'Nativa', 'Outlander', 'Pajero', 'Triton'],
+  Nissan:          ['Altima', 'Armada', 'Frontier', 'Kicks', 'Maxima', 'Murano', 'Navara', 'NP300', 'Pathfinder', 'Rogue', 'Sentra', 'Terra', 'Tiida', 'Versa', 'X-Trail'],
+  Peugeot:         ['2008', '206', '207', '208', '3008', '301', '308', '408'],
+  Renault:         ['Clio', 'Duster', 'Koleos', 'Kwid', 'Logan', 'Sandero', 'Stepway'],
+  Subaru:          ['BRZ', 'Crosstrek', 'Forester', 'Impreza', 'Legacy', 'Outback', 'XV'],
+  Suzuki:          ['Baleno', 'Grand Vitara', 'Ignis', 'Jimny', 'S-Cross', 'Swift', 'SX4', 'Vitara'],
+  Toyota:          ['4Runner', 'Avalon', 'Avanza', 'Camry', 'Corolla', 'FJ Cruiser', 'Fortuner', 'Hiace', 'Hilux', 'Innova', 'Land Cruiser', 'Prado', 'RAV4', 'Rush', 'Sequoia', 'Sienna', 'Tacoma', 'Tundra', 'Yaris'],
+  Volkswagen:      ['Amarok', 'Golf', 'Jetta', 'Passat', 'Polo', 'T-Cross', 'T-Roc', 'Tiguan', 'Touareg'],
+  Volvo:           ['S60', 'S90', 'V60', 'XC40', 'XC60', 'XC90'],
+}
+
+export const BRANDS = Object.keys(VEHICLE_CATALOG).sort()
