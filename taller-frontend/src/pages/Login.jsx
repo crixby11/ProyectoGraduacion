@@ -33,91 +33,121 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex">
+
+      {/* ── Panel izquierdo (branding) ── */}
+      <div className="hidden lg:flex lg:w-[52%] bg-[#0f1e3d] flex-col items-center justify-center p-14">
 
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-white shadow-md border border-gray-100 mb-5 p-2">
-            <img src={logo} alt="Taller Hermanos Juarez" className="w-full h-full object-contain" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Taller Hermanos Juarez</h1>
-          <p className="text-gray-500 text-sm mt-1">Sistema de Gestión</p>
+        <div className="w-40 h-40 rounded-3xl bg-white shadow-2xl shadow-black/40 p-4 mb-8">
+          <img src={logo} alt="Taller Hermanos Juarez" className="w-full h-full object-contain" />
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
+          Taller Hermanos Juarez
+        </h1>
+        <p className="text-white/40 text-[15px]">Sistema de Gestión Automotriz</p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Correo electrónico
-              </label>
-              <input
-                {...register('email')}
-                type="email"
-                autoComplete="email"
-                placeholder="admin@taller.com"
-                className={`input ${errors.email ? 'border-red-400 focus:ring-red-300' : ''}`}
-              />
-              {errors.email && (
-                <p className="mt-1.5 text-xs text-red-500">{errors.email.message}</p>
-              )}
-            </div>
-
-            {/* Contraseña */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Contraseña
-              </label>
-              <div className="relative">
-                <input
-                  {...register('password')}
-                  type={showPwd ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  className={`input pr-10 ${errors.password ? 'border-red-400 focus:ring-red-300' : ''}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPwd(v => !v)}
-                  tabIndex={-1}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-1.5 text-xs text-red-500">{errors.password.message}</p>
-              )}
-            </div>
-
-            {/* Botón */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn-primary w-full justify-center py-2.5 mt-1"
-            >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Ingresando...
-                </>
-              ) : 'Ingresar'}
-            </button>
-
-          </form>
-        </div>
-
-        <p className="text-center text-gray-400 text-xs mt-6">
-          Solo administradores autorizados · v1.0.0
+        {/* Footer del panel */}
+        <p className="absolute bottom-6 text-white/20 text-xs">
+          © {new Date().getFullYear()} Taller Hermanos Juarez · Honduras
         </p>
       </div>
+
+      {/* ── Panel derecho (formulario) ── */}
+      <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 p-6">
+
+        {/* Logo en móvil */}
+        <div className="lg:hidden text-center mb-8">
+          <div className="w-20 h-20 rounded-2xl bg-white shadow-md border border-gray-100 p-2 mx-auto mb-4">
+            <img src={logo} alt="Taller Hermanos Juarez" className="w-full h-full object-contain" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">Taller Hermanos Juarez</h1>
+          <p className="text-gray-400 text-sm mt-0.5">Sistema de Gestión</p>
+        </div>
+
+        <div className="w-full max-w-sm">
+
+          {/* Encabezado del form */}
+          <div className="mb-7">
+            <h2 className="text-2xl font-bold text-gray-900">Iniciar sesión</h2>
+            <p className="text-gray-500 text-sm mt-1">Ingresa tus credenciales para continuar</p>
+          </div>
+
+          {/* Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-7">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Correo electrónico
+                </label>
+                <input
+                  {...register('email')}
+                  type="email"
+                  autoComplete="email"
+                  placeholder="usuario@taller.com"
+                  className={`input ${errors.email ? 'border-red-400 focus:ring-red-300' : ''}`}
+                />
+                {errors.email && (
+                  <p className="mt-1.5 text-xs text-red-500">{errors.email.message}</p>
+                )}
+              </div>
+
+              {/* Contraseña */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <input
+                    {...register('password')}
+                    type={showPwd ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    className={`input pr-10 ${errors.password ? 'border-red-400 focus:ring-red-300' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd(v => !v)}
+                    tabIndex={-1}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="mt-1.5 text-xs text-red-500">{errors.password.message}</p>
+                )}
+              </div>
+
+              {/* Botón */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn-primary w-full justify-center py-2.5 mt-1"
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Ingresando...
+                  </>
+                ) : 'Ingresar'}
+              </button>
+
+            </form>
+          </div>
+
+          <p className="text-center text-gray-400 text-xs mt-5">
+            Solo administradores autorizados · v1.0.0
+          </p>
+        </div>
+      </div>
+
     </div>
   )
 }
