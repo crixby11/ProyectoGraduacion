@@ -4,7 +4,6 @@ import {
   Package, FileText, DollarSign, Calendar, CalendarCheck,
   Settings, Cog, X, BarChart2,
 } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
 import logo from '../../assets/logo.jpeg'
 
 /* ── Grupos de navegación ──────────────────────────────────── */
@@ -74,12 +73,6 @@ function NavItem({ to, icon: Icon, label, end, onClose }) {
 
 /* ── Sidebar ───────────────────────────────────────────────── */
 export default function Sidebar({ open, onClose }) {
-  const { user } = useAuth()
-
-  const initials = user?.name
-    ? user.name.trim().split(/\s+/).slice(0, 2).map(n => n[0]).join('').toUpperCase()
-    : '?'
-
   return (
     <>
       {/* Overlay móvil */}
@@ -140,22 +133,6 @@ export default function Sidebar({ open, onClose }) {
           <NavItem to="/settings" icon={Cog} label="Configuración" onClose={onClose} />
         </div>
 
-        {/* ── Usuario ── */}
-        <div className="px-3 py-3 border-t border-white/[0.07]">
-          <div className="flex items-center gap-2.5 px-2 py-1.5">
-            <div className="w-8 h-8 rounded-full bg-primary-700 ring-2 ring-primary-600/40 flex items-center justify-center shrink-0 text-xs font-bold text-white">
-              {initials}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white truncate leading-tight">
-                {user?.name ?? 'Usuario'}
-              </p>
-              <p className="text-[11px] text-white/35 truncate">
-                {user?.email ?? 'Administrador'}
-              </p>
-            </div>
-          </div>
-        </div>
       </aside>
     </>
   )
