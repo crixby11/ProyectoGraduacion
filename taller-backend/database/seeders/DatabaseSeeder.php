@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             InventorySeeder::class,
             CustomerVehicleSeeder::class,
+            DemoDataSeeder::class,
         ]);
     }
 }
