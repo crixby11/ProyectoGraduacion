@@ -84,6 +84,13 @@ export default function Calendar() {
     onError:    ()  => toast.error('No se pudo generar el enlace'),
   })
 
+  // ── Handlers ──────────────────────────────────────────────────────────
+  const handleCloseModal = () => {
+    setModalOpen(false)
+    setSelected(null)
+    setDefaultDate(null)
+  }
+
   const genOT = useConvertToOT({ onClose: handleCloseModal })
 
   // ── Construcción de eventos ────────────────────────────────────────────
@@ -117,13 +124,6 @@ export default function Calendar() {
           }
         })
     : []
-
-  // ── Handlers ──────────────────────────────────────────────────────────
-  const handleCloseModal = () => {
-    setModalOpen(false)
-    setSelected(null)
-    setDefaultDate(null)
-  }
 
   const handleDateClick = (info) => {
     setSelected(null)
