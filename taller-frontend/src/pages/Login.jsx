@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import logo from '../assets/logo.jpeg'
 import toast from 'react-hot-toast'
@@ -69,27 +69,40 @@ export default function Login() {
         <div className="w-full max-w-sm">
 
           {/* Encabezado del form */}
-          <div className="mb-7">
-            <h2 className="text-2xl font-bold text-gray-900">Iniciar sesión</h2>
-            <p className="text-gray-500 text-sm mt-1">Ingresa tus credenciales para continuar</p>
+          <div className="mb-8">
+            <h2 className="text-[26px] font-bold text-gray-900 tracking-tight">Bienvenido</h2>
+            <p className="text-gray-500 text-sm mt-1.5">Inicia sesión con tu cuenta para continuar</p>
           </div>
 
           {/* Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-7">
+          <div className="bg-white rounded-3xl shadow-lg shadow-gray-200/60 border border-gray-100 p-8">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
                   Correo electrónico
                 </label>
-                <input
-                  {...register('email')}
-                  type="email"
-                  autoComplete="email"
-                  placeholder="usuario@taller.com"
-                  className={`input ${errors.email ? 'border-red-400 focus:ring-red-300' : ''}`}
-                />
+                <div className="relative">
+                  <Mail
+                    size={16}
+                    className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${errors.email ? 'text-red-400' : 'text-gray-400'}`}
+                  />
+                  <input
+                    {...register('email')}
+                    type="email"
+                    autoComplete="email"
+                    placeholder="usuario@taller.com"
+                    className={`
+                      w-full pl-10 pr-3.5 py-2.5 rounded-xl text-sm text-gray-800 placeholder:text-gray-300
+                      bg-gray-50/50 border transition-all duration-150 outline-none
+                      ${errors.email
+                        ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100'
+                        : 'border-gray-200 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:ring-4 focus:ring-primary-100'
+                      }
+                    `}
+                  />
+                </div>
                 {errors.email && (
                   <p className="mt-1.5 text-xs text-red-500">{errors.email.message}</p>
                 )}
@@ -97,22 +110,33 @@ export default function Login() {
 
               {/* Contraseña */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
                   Contraseña
                 </label>
                 <div className="relative">
+                  <Lock
+                    size={16}
+                    className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${errors.password ? 'text-red-400' : 'text-gray-400'}`}
+                  />
                   <input
                     {...register('password')}
                     type={showPwd ? 'text' : 'password'}
                     autoComplete="current-password"
                     placeholder="••••••••"
-                    className={`input pr-10 ${errors.password ? 'border-red-400 focus:ring-red-300' : ''}`}
+                    className={`
+                      w-full pl-10 pr-11 py-2.5 rounded-xl text-sm text-gray-800 placeholder:text-gray-300
+                      bg-gray-50/50 border transition-all duration-150 outline-none
+                      ${errors.password
+                        ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100'
+                        : 'border-gray-200 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:ring-4 focus:ring-primary-100'
+                      }
+                    `}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPwd(v => !v)}
                     tabIndex={-1}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                   >
                     {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -126,7 +150,14 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="btn-primary w-full justify-center py-2.5 mt-1"
+                className="
+                  group w-full flex items-center justify-center gap-2 py-3 mt-2 rounded-xl
+                  bg-[#0f1e3d] text-white text-sm font-semibold
+                  shadow-lg shadow-[#0f1e3d]/25
+                  hover:bg-[#162952] hover:shadow-xl hover:shadow-[#0f1e3d]/30
+                  active:scale-[0.99] transition-all duration-150
+                  disabled:opacity-60 disabled:pointer-events-none
+                "
               >
                 {isSubmitting ? (
                   <>
@@ -136,13 +167,18 @@ export default function Login() {
                     </svg>
                     Ingresando...
                   </>
-                ) : 'Ingresar'}
+                ) : (
+                  <>
+                    Ingresar
+                    <ArrowRight size={16} className="transition-transform duration-150 group-hover:translate-x-0.5" />
+                  </>
+                )}
               </button>
 
             </form>
           </div>
 
-          <p className="text-center text-gray-400 text-xs mt-5">
+          <p className="text-center text-gray-400 text-xs mt-6">
             Solo administradores autorizados · v1.0.0
           </p>
         </div>
