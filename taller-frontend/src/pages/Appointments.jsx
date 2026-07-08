@@ -194,8 +194,8 @@ export default function Appointments() {
               onClick={() => applyPeriod(p)}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors
                 ${activePeriod === p.label
-                  ? 'bg-primary-600 text-white border-primary-600'
-                  : 'border-gray-200 text-gray-600 hover:border-primary-300'}`}
+                  ? 'bg-[#0f1e3d] text-white border-[#0f1e3d]'
+                  : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
             >
               {p.label}
             </button>

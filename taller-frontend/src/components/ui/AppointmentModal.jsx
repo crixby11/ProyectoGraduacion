@@ -305,7 +305,7 @@ export default function AppointmentModal({
                 type="button"
                 onClick={switchToRegistered}
                 className={`px-3 py-1.5 flex items-center gap-1.5 transition-colors
-                  ${!isWalkIn ? 'bg-primary-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                  ${!isWalkIn ? 'bg-[#0f1e3d] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
               >
                 <Users size={12} /> Registrado
               </button>
@@ -313,7 +313,7 @@ export default function AppointmentModal({
                 type="button"
                 onClick={switchToWalkIn}
                 className={`px-3 py-1.5 flex items-center gap-1.5 transition-colors
-                  ${isWalkIn ? 'bg-primary-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                  ${isWalkIn ? 'bg-[#0f1e3d] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
               >
                 <User size={12} /> Sin cuenta
               </button>

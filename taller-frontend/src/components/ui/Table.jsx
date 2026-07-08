@@ -33,9 +33,14 @@ export function Table({ columns, data, loading, emptyMessage = 'Sin resultados',
           {data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="px-4 py-16 text-center">
-                <div className="flex flex-col items-center gap-2 text-gray-400">
-                  <InboxIcon size={32} strokeWidth={1.5} />
-                  <span className="text-sm">{emptyMessage}</span>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                    <InboxIcon size={24} strokeWidth={1.5} className="text-gray-300" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-500">{emptyMessage}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Los registros aparecerán aquí cuando existan</p>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -87,7 +92,7 @@ export function Pagination({ meta, onPageChange }) {
               onClick={() => onPageChange(p)}
               className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
                 p === meta.current_page
-                  ? 'bg-primary-600 text-white shadow-sm'
+                  ? 'bg-[#0f1e3d] text-white shadow-sm'
                   : 'text-gray-600 hover:bg-white hover:shadow-sm'
               }`}
             >

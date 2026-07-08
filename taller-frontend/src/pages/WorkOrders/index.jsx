@@ -220,8 +220,8 @@ export default function WorkOrders() {
                 onClick={() => { setDateFrom(p.from); setDateTo(p.to); setPage(1) }}
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors
                   ${dateFrom === p.from && dateTo === p.to
-                    ? 'bg-primary-600 text-white border-primary-600'
-                    : 'border-gray-200 text-gray-500 hover:border-primary-300'}`}
+                    ? 'bg-[#0f1e3d] text-white border-[#0f1e3d]'
+                    : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
               >
                 {p.label}
               </button>

@@ -29,10 +29,10 @@ function getGreeting() {
 // ── KPI Card ───────────────────────────────────────────────────────────────
 function KpiCard({ icon: Icon, label, value, sub, color = 'blue' }) {
   const palette = {
-    blue:   { soft: 'bg-blue-50',    icon: 'text-blue-500',    ring: 'ring-blue-100',    val: 'text-blue-700'    },
-    green:  { soft: 'bg-emerald-50', icon: 'text-emerald-500', ring: 'ring-emerald-100', val: 'text-emerald-700' },
-    yellow: { soft: 'bg-amber-50',   icon: 'text-amber-500',   ring: 'ring-amber-100',   val: 'text-amber-700'   },
-    purple: { soft: 'bg-violet-50',  icon: 'text-violet-500',  ring: 'ring-violet-100',  val: 'text-violet-700'  },
+    blue:   { soft: 'bg-blue-50',    icon: 'text-blue-500',    ring: 'ring-blue-100'    },
+    green:  { soft: 'bg-emerald-50', icon: 'text-emerald-500', ring: 'ring-emerald-100' },
+    yellow: { soft: 'bg-amber-50',   icon: 'text-amber-500',   ring: 'ring-amber-100'   },
+    purple: { soft: 'bg-violet-50',  icon: 'text-violet-500',  ring: 'ring-violet-100'  },
   }
   const c = palette[color] ?? palette.blue
   return (
@@ -40,7 +40,7 @@ function KpiCard({ icon: Icon, label, value, sub, color = 'blue' }) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">{label}</p>
-          <p className={`text-2xl font-bold mt-2 leading-none ${c.val} truncate`}>{value}</p>
+          <p className="text-2xl font-bold mt-2 leading-none text-gray-800 truncate">{value}</p>
           {sub && <p className="text-xs text-gray-400 mt-1.5 truncate">{sub}</p>}
         </div>
         <div className={`p-2.5 rounded-2xl ${c.soft} ring-1 ${c.ring} shrink-0`}>
@@ -398,11 +398,11 @@ export default function Dashboard() {
           {hasDelivery && (
             <div className="card p-5">
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="p-1.5 rounded-lg bg-primary-50">
-                  <Truck size={15} className="text-primary-600" />
+                <div className="p-1.5 rounded-lg bg-blue-50">
+                  <Truck size={15} className="text-blue-500" />
                 </div>
                 <h2 className="text-base font-semibold text-gray-800">Entregas hoy</h2>
-                <span className="ml-auto text-xs font-bold text-white bg-primary-600 rounded-full px-2 py-0.5 tabular-nums">
+                <span className="ml-auto text-xs font-bold text-white bg-blue-500 rounded-full px-2 py-0.5 tabular-nums">
                   {d.deliveries_today.length}
                 </span>
               </div>
