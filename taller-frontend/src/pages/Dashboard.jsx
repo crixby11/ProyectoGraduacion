@@ -168,7 +168,135 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* ── Gráfica + Panel derecho ─────────────────────────────────────── */}
+      {/* ── Alerta OTs vencidas ─────────────────────────────────────────── */}
+      {hasOverdue && (
+        <div className="card p-5 border-l-4 border-red-400">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="p-1.5 rounded-lg bg-red-50">
+              <AlertTriangle size={15} className="text-red-500" />
+            </div>
+            <h2 className="text-base font-semibold text-gray-800">Entrega vencida</h2>
+            <span className="ml-auto text-xs font-bold text-white bg-red-500 rounded-full px-2 py-0.5 tabular-nums">
+              {d.overdue_work_orders.length}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {d.overdue_work_orders.map((ot) => (
+              <Link
+                key={ot.id}
+                to={`/work-orders/${ot.id}`}
+                className="flex items-center gap-3 p-3 rounded-xl border border-red-100 bg-red-50/60 hover:bg-red-100 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-gray-900 truncate">{ot.number}</p>
+                  <p className="text-xs text-gray-500 truncate">{ot.customer_name ?? '—'}</p>
+                </div>
+                <div className="text-right shrink-0 space-y-1">
+                  <p className="text-xs text-red-600 font-medium whitespace-nowrap">{fmtDate(ot.promised_at)}</p>
+                  <StatusBadge status={ot.status} />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Citas hoy + Entregas hoy ────────────────────────────────────── */}
+      {(hasApts || hasDelivery) && (
+        <div className={`grid grid-cols-1 gap-6 ${hasApts && hasDelivery ? 'lg:grid-cols-2' : ''}`}>
+
+          {/* Citas de hoy */}
+          {hasApts && (
+            <div className="card p-5">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="p-1.5 rounded-lg bg-blue-50">
+                  <Clock size={15} className="text-blue-500" />
+                </div>
+                <h2 className="text-base font-semibold text-gray-800">Citas hoy</h2>
+                <span className="ml-auto text-xs font-bold text-white bg-blue-500 rounded-full px-2 py-0.5 tabular-nums">
+                  {d.appointments_today.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {d.appointments_today.map((apt) => {
+                  const name = apt.customer?.name || apt.customer_name || 'Sin nombre'
+                  const dot  = APT_DOT[apt.status]  ?? 'bg-gray-300'
+                  const lbl  = APT_LABEL[apt.status] ?? apt.status
+                  return (
+                    <Link
+                      key={apt.id}
+                      to="/appointments"
+                      className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 transition-colors"
+                    >
+                      {/* Hora */}
+                      <div className="text-xs font-semibold text-gray-500 tabular-nums w-16 shrink-0">
+                        {fmtTime(apt.start_at)}
+                      </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-gray-900 truncate">{apt.title || name}</p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {apt.vehicle?.plate
+                            ? `${apt.vehicle.plate}${apt.vehicle.brand ? ` · ${apt.vehicle.brand}` : ''}`
+                            : name}
+                        </p>
+                      </div>
+                      {/* Estado */}
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 shrink-0">
+                        <span className={`w-2 h-2 rounded-full ${dot}`} />
+                        {lbl}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
+              <Link
+                to="/calendar"
+                className="mt-3 flex items-center justify-center gap-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors py-1"
+              >
+                Ver calendario <ArrowRight size={12} />
+              </Link>
+            </div>
+          )}
+
+          {/* Entregas prometidas hoy */}
+          {hasDelivery && (
+            <div className="card p-5">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="p-1.5 rounded-lg bg-blue-50">
+                  <Truck size={15} className="text-blue-500" />
+                </div>
+                <h2 className="text-base font-semibold text-gray-800">Entregas hoy</h2>
+                <span className="ml-auto text-xs font-bold text-white bg-blue-500 rounded-full px-2 py-0.5 tabular-nums">
+                  {d.deliveries_today.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {d.deliveries_today.map((ot) => (
+                  <Link
+                    key={ot.id}
+                    to={`/work-orders/${ot.id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/60 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 truncate">{ot.number}</p>
+                      <p className="text-xs text-gray-500 truncate">{ot.customer_name}</p>
+                      {(ot.vehicle_plate || ot.vehicle_brand) && (
+                        <p className="text-xs text-gray-400 truncate">
+                          {[ot.vehicle_plate, ot.vehicle_brand, ot.vehicle_model].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                    <StatusBadge status={ot.status} />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Gráfica + Panel de análisis ─────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Área chart */}
@@ -302,134 +430,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-
-      {/* ── Alerta OTs vencidas ─────────────────────────────────────────── */}
-      {hasOverdue && (
-        <div className="card p-5 border-l-4 border-red-400">
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-red-50">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <h2 className="text-base font-semibold text-gray-800">Entrega vencida</h2>
-            <span className="ml-auto text-xs font-bold text-white bg-red-500 rounded-full px-2 py-0.5 tabular-nums">
-              {d.overdue_work_orders.length}
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {d.overdue_work_orders.map((ot) => (
-              <Link
-                key={ot.id}
-                to={`/work-orders/${ot.id}`}
-                className="flex items-center gap-3 p-3 rounded-xl border border-red-100 bg-red-50/60 hover:bg-red-100 transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-900 truncate">{ot.number}</p>
-                  <p className="text-xs text-gray-500 truncate">{ot.customer_name ?? '—'}</p>
-                </div>
-                <div className="text-right shrink-0 space-y-1">
-                  <p className="text-xs text-red-600 font-medium whitespace-nowrap">{fmtDate(ot.promised_at)}</p>
-                  <StatusBadge status={ot.status} />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Citas hoy + Entregas hoy ────────────────────────────────────── */}
-      {(hasApts || hasDelivery) && (
-        <div className={`grid grid-cols-1 gap-6 ${hasApts && hasDelivery ? 'lg:grid-cols-2' : ''}`}>
-
-          {/* Citas de hoy */}
-          {hasApts && (
-            <div className="card p-5">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="p-1.5 rounded-lg bg-blue-50">
-                  <Clock size={15} className="text-blue-500" />
-                </div>
-                <h2 className="text-base font-semibold text-gray-800">Citas hoy</h2>
-                <span className="ml-auto text-xs font-bold text-white bg-blue-500 rounded-full px-2 py-0.5 tabular-nums">
-                  {d.appointments_today.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {d.appointments_today.map((apt) => {
-                  const name = apt.customer?.name || apt.customer_name || 'Sin nombre'
-                  const dot  = APT_DOT[apt.status]  ?? 'bg-gray-300'
-                  const lbl  = APT_LABEL[apt.status] ?? apt.status
-                  return (
-                    <Link
-                      key={apt.id}
-                      to="/appointments"
-                      className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 transition-colors"
-                    >
-                      {/* Hora */}
-                      <div className="text-xs font-semibold text-gray-500 tabular-nums w-16 shrink-0">
-                        {fmtTime(apt.start_at)}
-                      </div>
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-900 truncate">{apt.title || name}</p>
-                        <p className="text-xs text-gray-400 truncate">
-                          {apt.vehicle?.plate
-                            ? `${apt.vehicle.plate}${apt.vehicle.brand ? ` · ${apt.vehicle.brand}` : ''}`
-                            : name}
-                        </p>
-                      </div>
-                      {/* Estado */}
-                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 shrink-0">
-                        <span className={`w-2 h-2 rounded-full ${dot}`} />
-                        {lbl}
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-              <Link
-                to="/calendar"
-                className="mt-3 flex items-center justify-center gap-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors py-1"
-              >
-                Ver calendario <ArrowRight size={12} />
-              </Link>
-            </div>
-          )}
-
-          {/* Entregas prometidas hoy */}
-          {hasDelivery && (
-            <div className="card p-5">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="p-1.5 rounded-lg bg-blue-50">
-                  <Truck size={15} className="text-blue-500" />
-                </div>
-                <h2 className="text-base font-semibold text-gray-800">Entregas hoy</h2>
-                <span className="ml-auto text-xs font-bold text-white bg-blue-500 rounded-full px-2 py-0.5 tabular-nums">
-                  {d.deliveries_today.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {d.deliveries_today.map((ot) => (
-                  <Link
-                    key={ot.id}
-                    to={`/work-orders/${ot.id}`}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/60 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 truncate">{ot.number}</p>
-                      <p className="text-xs text-gray-500 truncate">{ot.customer_name}</p>
-                      {(ot.vehicle_plate || ot.vehicle_brand) && (
-                        <p className="text-xs text-gray-400 truncate">
-                          {[ot.vehicle_plate, ot.vehicle_brand, ot.vehicle_model].filter(Boolean).join(' · ')}
-                        </p>
-                      )}
-                    </div>
-                    <StatusBadge status={ot.status} />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }
