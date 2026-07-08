@@ -75,10 +75,6 @@ export default function Header({ onMenuClick }) {
 
   const closePwdModal = () => { setPwdModal(false); reset() }
 
-  const initials = user?.name
-    ? user.name.trim().split(/\s+/).slice(0, 2).map(n => n[0]).join('').toUpperCase()
-    : '?'
-
   return (
     <>
       <header className="bg-white border-b border-gray-100 px-5 h-14 flex items-center gap-4 shrink-0">
@@ -101,11 +97,8 @@ export default function Header({ onMenuClick }) {
         {/* Usuario + acciones */}
         <div className="flex items-center gap-1">
 
-          {/* Avatar + nombre */}
-          <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl">
-            <div className="w-7 h-7 rounded-full bg-primary-600 flex items-center justify-center text-[11px] font-bold text-white shrink-0">
-              {initials}
-            </div>
+          {/* Nombre de usuario */}
+          <div className="hidden sm:flex items-center px-3 py-1.5 rounded-xl">
             <span className="text-sm font-medium text-gray-700 leading-none">
               {user?.name}
             </span>

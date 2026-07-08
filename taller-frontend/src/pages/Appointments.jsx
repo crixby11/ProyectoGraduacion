@@ -412,7 +412,7 @@ export default function Appointments() {
                     type="button"
                     onClick={() => mutGenOT.mutate(selected)}
                     disabled={mutGenOT.isPending}
-                    className="btn-primary text-sm flex items-center gap-1.5"
+                    className="btn-secondary text-sm flex items-center gap-1.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300"
                   >
                     <FileText size={14} />
                     {mutGenOT.isPending ? 'Generando...' : 'Convertir en OT'}

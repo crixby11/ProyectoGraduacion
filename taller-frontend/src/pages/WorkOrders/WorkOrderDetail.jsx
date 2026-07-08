@@ -694,7 +694,7 @@ export default function WorkOrderDetail() {
           <button
             type="submit"
             disabled={mutAddNote.isPending || !watchNote('body')}
-            className="btn-primary h-10 px-4 shrink-0 disabled:opacity-50"
+            className="btn-secondary h-10 px-4 shrink-0 disabled:opacity-50"
           >
             {mutAddNote.isPending ? '...' : <Send size={16} />}
           </button>

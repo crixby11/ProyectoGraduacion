@@ -513,7 +513,7 @@ export default function AppointmentModal({
               </button>
             )}
             {onConvertToOT && canConvert && (
-              <button type="button" onClick={onConvertToOT} className="btn-primary text-sm flex items-center gap-1.5">
+              <button type="button" onClick={onConvertToOT} className="btn-secondary text-sm flex items-center gap-1.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300">
                 <FileText size={14} /> Convertir en OT
               </button>
             )}
