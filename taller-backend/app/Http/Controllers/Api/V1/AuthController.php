@@ -17,11 +17,20 @@ class AuthController extends Controller
         ]);
 
         if (! Auth::attempt($credentials)) {
+            activity('autenticacion')
+                ->withProperties(['email' => $credentials['email'], 'ip' => $request->ip()])
+                ->log('Intento de inicio de sesión fallido');
+
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
         $user = Auth::user();
         $token = $user->createToken('taller-token')->plainTextToken;
+
+        activity('autenticacion')
+            ->causedBy($user)
+            ->withProperties(['ip' => $request->ip()])
+            ->log('Inicio de sesión');
 
         return response()->json([
             'user' => $user,
@@ -31,6 +40,10 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        activity('autenticacion')
+            ->causedBy($request->user())
+            ->log('Cierre de sesión');
+
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Sesión cerrada']);
@@ -55,6 +68,10 @@ class AuthController extends Controller
         $request->user()->update([
             'password' => Hash::make($data['new_password']),
         ]);
+
+        activity('autenticacion')
+            ->causedBy($request->user())
+            ->log('Cambio de contraseña');
 
         // Revocar todos los tokens existentes (forzar re-login en todos los dispositivos)
         $request->user()->tokens()->delete();

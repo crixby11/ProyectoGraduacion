@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
@@ -91,4 +92,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Configuración del taller
     Route::get('settings', [SettingController::class, 'index']);
     Route::put('settings', [SettingController::class, 'update']);
+
+    // Auditoría / historial de actividad
+    Route::get('activity-logs', [ActivityLogController::class, 'index']);
+    Route::get('activity-logs/log-names', [ActivityLogController::class, 'logNames']);
 });

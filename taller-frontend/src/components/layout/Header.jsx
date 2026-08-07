@@ -24,6 +24,7 @@ const PAGE_TITLES = {
   '/calendar':     'Calendario',
   '/appointments': 'Citas',
   '/settings':     'Configuración',
+  '/activity-log': 'Auditoría',
 }
 
 function getTitle(pathname) {

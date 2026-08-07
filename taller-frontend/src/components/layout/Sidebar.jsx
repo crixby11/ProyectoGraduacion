@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Car, Wrench, ClipboardList,
   Package, FileText, DollarSign, Calendar, CalendarCheck,
-  Settings, Cog, X, BarChart2,
+  Settings, Cog, X, BarChart2, History,
 } from 'lucide-react'
 import logo from '../../assets/logo.jpeg'
 
@@ -129,7 +129,8 @@ export default function Sidebar({ open, onClose }) {
         </nav>
 
         {/* ── Configuración ── */}
-        <div className="px-2.5 pb-3 border-t border-white/[0.07] pt-3">
+        <div className="px-2.5 pb-3 border-t border-white/[0.07] pt-3 space-y-0.5">
+          <NavItem to="/activity-log" icon={History} label="Auditoría" onClose={onClose} />
           <NavItem to="/settings" icon={Cog} label="Configuración" onClose={onClose} />
         </div>
 

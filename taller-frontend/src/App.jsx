@@ -21,6 +21,7 @@ import Payments from './pages/Payments'
 import Calendar from './pages/Calendar'
 import Appointments from './pages/Appointments'
 import Settings from './pages/Settings'
+import ActivityLog from './pages/ActivityLog'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -68,6 +69,7 @@ export default function App() {
               <Route path="calendar" element={<Calendar />} />
               <Route path="appointments" element={<Appointments />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="activity-log" element={<ActivityLog />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
