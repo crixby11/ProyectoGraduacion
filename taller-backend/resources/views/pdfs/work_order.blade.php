@@ -8,6 +8,8 @@
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; }
 
         .header { background: #1e40af; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-logo { width: 48px; height: 48px; border-radius: 8px; background: white; padding: 3px; }
         .header-left h1 { font-size: 20px; font-weight: bold; }
         .header-left p { font-size: 10px; margin-top: 2px; opacity: 0.85; }
         .header-right { text-align: right; }
@@ -70,10 +72,19 @@
     {{-- Encabezado --}}
     <div class="header">
         <div class="header-left">
-            <h1>{{ strtoupper($settings['shop_name'] ?? 'TALLER MECÁNICO') }}</h1>
-            <p>Orden de Trabajo — Copia Técnica</p>
-            @if(!empty($settings['shop_address']))<p>{{ $settings['shop_address'] }}</p>@endif
-            @if(!empty($settings['shop_phone']))<p>Tel: {{ $settings['shop_phone'] }}</p>@endif
+            @php
+                $logoPath = public_path('img/logo.jpeg');
+                $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : null;
+            @endphp
+            @if($logoData)
+            <img class="header-logo" src="data:image/jpeg;base64,{{ $logoData }}" alt="Logo">
+            @endif
+            <div>
+                <h1>{{ strtoupper($settings['shop_name'] ?? 'TALLER MECÁNICO') }}</h1>
+                <p>Orden de Trabajo — Copia Técnica</p>
+                @if(!empty($settings['shop_address']))<p>{{ $settings['shop_address'] }}</p>@endif
+                @if(!empty($settings['shop_phone']))<p>Tel: {{ $settings['shop_phone'] }}</p>@endif
+            </div>
         </div>
         <div class="header-right">
             <div class="ot-label">ORDEN DE TRABAJO</div>
