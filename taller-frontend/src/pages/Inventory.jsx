@@ -267,11 +267,11 @@ export default function Inventory() {
               <input {...register('min_stock')} type="number" className="input" />
             </div>
             <div>
-              <label className="label">Costo (Lps)</label>
+              <label className="label">Costo (L)</label>
               <input {...register('cost')} type="number" step="100" className="input" />
             </div>
             <div>
-              <label className="label">Precio de venta (Lps)</label>
+              <label className="label">Precio de venta (L)</label>
               <input {...register('sale_price')} type="number" step="100" className="input" />
             </div>
             <div className="sm:col-span-2">

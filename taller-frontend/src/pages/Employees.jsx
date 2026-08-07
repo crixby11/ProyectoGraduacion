@@ -190,7 +190,7 @@ export default function Employees() {
               <input {...register('email')} type="email" className="input" />
             </div>
             <div>
-              <label className="label">Salario quincenal (Lps) *</label>
+              <label className="label">Salario quincenal (L) *</label>
               <input {...register('biweekly_salary')} type="number" step="0.01" className="input" placeholder="0.00" />
               {errors.biweekly_salary && <p className="mt-1 text-xs text-red-500">{errors.biweekly_salary.message}</p>}
             </div>

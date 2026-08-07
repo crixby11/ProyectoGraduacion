@@ -111,7 +111,7 @@ export default function Services() {
               <input {...register('estimated_hours')} type="number" step="0.5" className="input" />
             </div>
             <div>
-              <label className="label">Precio base (Lps)</label>
+              <label className="label">Precio base (L)</label>
               <input {...register('base_price')} type="number" step="100" className="input" />
             </div>
           </div>

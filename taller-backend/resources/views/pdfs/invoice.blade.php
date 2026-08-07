@@ -162,7 +162,7 @@
                 <tr>
                     <td>{{ number_format($svc->hours, 1) }}</td>
                     <td>{{ $svc->service_name }}</td>
-                    <td class="text-right">Lps {{ number_format($svc->subtotal, 2) }}</td>
+                    <td class="text-right">L {{ number_format($svc->subtotal, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -185,7 +185,7 @@
                 <tr>
                     <td>{{ $part->quantity }}</td>
                     <td>{{ $part->part_name }}</td>
-                    <td class="text-right">Lps {{ number_format($part->subtotal, 2) }}</td>
+                    <td class="text-right">L {{ number_format($part->subtotal, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -210,7 +210,7 @@
                     <td>{{ \Carbon\Carbon::parse($pay->payment_date)->format('d/m/Y') }}</td>
                     <td style="text-transform:capitalize;">{{ $pay->method }}</td>
                     <td class="muted">{{ $pay->reference ?? '—' }}</td>
-                    <td class="text-right">Lps {{ number_format($pay->amount, 2) }}</td>
+                    <td class="text-right">L {{ number_format($pay->amount, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -228,42 +228,42 @@
                 <table>
                     <tr>
                         <td class="label">Servicios</td>
-                        <td class="amount">Lps {{ number_format($invoice->subtotal_services, 2) }}</td>
+                        <td class="amount">L {{ number_format($invoice->subtotal_services, 2) }}</td>
                     </tr>
                     <tr>
                         <td class="label">Repuestos</td>
-                        <td class="amount">Lps {{ number_format($invoice->subtotal_parts, 2) }}</td>
+                        <td class="amount">L {{ number_format($invoice->subtotal_parts, 2) }}</td>
                     </tr>
                     <tr class="divider">
                         <td class="label">Subtotal</td>
-                        <td class="amount">Lps {{ number_format($invoice->subtotal, 2) }}</td>
+                        <td class="amount">L {{ number_format($invoice->subtotal, 2) }}</td>
                     </tr>
                     @if($invoice->discount_amount > 0)
                     <tr>
                         <td class="label">Descuento ({{ number_format($invoice->discount_percent, 1) }}%)</td>
-                        <td class="amount">- Lps {{ number_format($invoice->discount_amount, 2) }}</td>
+                        <td class="amount">- L {{ number_format($invoice->discount_amount, 2) }}</td>
                     </tr>
                     @endif
                     @if($invoice->tax_amount > 0)
                     <tr>
                         <td class="label">Impuesto ({{ number_format($invoice->tax_percent, 1) }}%)</td>
-                        <td class="amount">Lps {{ number_format($invoice->tax_amount, 2) }}</td>
+                        <td class="amount">L {{ number_format($invoice->tax_amount, 2) }}</td>
                     </tr>
                     @endif
                     <tr class="grand">
                         <td>TOTAL A PAGAR</td>
-                        <td class="amount">Lps {{ number_format($invoice->total, 2) }}</td>
+                        <td class="amount">L {{ number_format($invoice->total, 2) }}</td>
                     </tr>
                     @if($invoice->amount_paid > 0)
                     <tr class="paid">
                         <td class="label">Pagado</td>
-                        <td class="amount">Lps {{ number_format($invoice->amount_paid, 2) }}</td>
+                        <td class="amount">L {{ number_format($invoice->amount_paid, 2) }}</td>
                     </tr>
                     @endif
                     @if($invoice->balance > 0)
                     <tr class="balance">
                         <td>Saldo pendiente</td>
-                        <td class="amount">Lps {{ number_format($invoice->balance, 2) }}</td>
+                        <td class="amount">L {{ number_format($invoice->balance, 2) }}</td>
                     </tr>
                     @endif
                 </table>

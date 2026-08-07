@@ -14,7 +14,7 @@ import { fmtDate, fmtTime } from '../utils/date'
 import StatusBadge from '../components/ui/StatusBadge'
 
 const fmt = (n) =>
-  `Lps ${Number(n ?? 0).toLocaleString('es-HN', { minimumFractionDigits: 0 })}`
+  `L ${Number(n ?? 0).toLocaleString('es-HN', { minimumFractionDigits: 0 })}`
 
 // Capitaliza solo la primera letra de la cadena (no cada palabra)
 const capFirst = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s

@@ -1,6 +1,6 @@
 /** Formato canónico de moneda Lempiras — siempre 2 decimales */
 export function fmtMoney(n) {
-  return `Lps ${Number(n ?? 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `L ${Number(n ?? 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 /**

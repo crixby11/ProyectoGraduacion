@@ -68,7 +68,7 @@ class PaymentController extends Controller
 
             if ($data['amount'] > $invoice->balance) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'amount' => ['El monto supera el saldo pendiente de Lps ' . number_format($invoice->balance, 2)],
+                    'amount' => ['El monto supera el saldo pendiente de L ' . number_format($invoice->balance, 2)],
                 ]);
             }
 

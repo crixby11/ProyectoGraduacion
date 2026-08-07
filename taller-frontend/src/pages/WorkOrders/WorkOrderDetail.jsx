@@ -737,7 +737,7 @@ export default function WorkOrderDetail() {
               <input {...regSvc('hours')} type="number" step="0.5" min="0.5" className="input" defaultValue={1} required />
             </div>
             <div>
-              <label className="label">Tarifa/hora (Lps) *</label>
+              <label className="label">Tarifa/hora (L) *</label>
               <input {...regSvc('hourly_rate')} type="number" step="1" min="0" className="input" defaultValue={0} required />
             </div>
           </div>
@@ -775,7 +775,7 @@ export default function WorkOrderDetail() {
               <input {...regPart('quantity')} type="number" min="1" className="input" defaultValue={1} required />
             </div>
             <div>
-              <label className="label">Precio unitario (Lps) *</label>
+              <label className="label">Precio unitario (L) *</label>
               <input {...regPart('unit_price')} type="number" step="1" min="0" className="input" defaultValue={0} required />
             </div>
           </div>
@@ -806,7 +806,7 @@ export default function WorkOrderDetail() {
               <input {...regESvc('hours')} type="number" step="0.5" min="0" className="input" required />
             </div>
             <div>
-              <label className="label">Tarifa/hora (Lps) *</label>
+              <label className="label">Tarifa/hora (L) *</label>
               <input {...regESvc('hourly_rate')} type="number" step="1" min="0" className="input" required />
             </div>
           </div>
@@ -837,7 +837,7 @@ export default function WorkOrderDetail() {
               <input {...regEPart('quantity')} type="number" min="1" className="input" required />
             </div>
             <div>
-              <label className="label">Precio unitario (Lps) *</label>
+              <label className="label">Precio unitario (L) *</label>
               <input {...regEPart('unit_price')} type="number" step="1" min="0" className="input" required />
             </div>
           </div>
@@ -1031,7 +1031,7 @@ export default function WorkOrderDetail() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="label">Monto (Lps) *</label>
+              <label className="label">Monto (L) *</label>
               <input {...regPay('amount')} type="number" step="0.01" min="0.01" max={wo?.invoice?.balance} className="input" required />
             </div>
             <div>

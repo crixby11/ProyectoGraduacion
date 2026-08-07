@@ -233,7 +233,7 @@ class DemoDataSeeder extends Seeder
                 'amount'        => 30000,
                 'payment_date'  => now()->subDays(4)->toDateString(),
                 'reference'     => 'TRF-20260702',
-                'notes'         => 'Abono inicial. Saldo pendiente: Lps 36,800.',
+                'notes'         => 'Abono inicial. Saldo pendiente: L 36,800.',
             ]);
         }
 

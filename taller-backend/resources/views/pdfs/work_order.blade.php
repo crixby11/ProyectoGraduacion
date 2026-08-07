@@ -178,8 +178,8 @@
                     <td>{{ $svc->service_name }}</td>
                     <td>{{ $svc->employee?->name ?? '—' }}</td>
                     <td class="text-right">{{ number_format($svc->hours, 2) }}</td>
-                    <td class="text-right">Lps {{ number_format($svc->hourly_rate, 2) }}</td>
-                    <td class="text-right">Lps {{ number_format($svc->subtotal, 2) }}</td>
+                    <td class="text-right">L {{ number_format($svc->hourly_rate, 2) }}</td>
+                    <td class="text-right">L {{ number_format($svc->subtotal, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -207,8 +207,8 @@
                     <td>{{ $part->part_name }}</td>
                     <td>{{ $part->part_sku ?? '—' }}</td>
                     <td class="text-right">{{ $part->quantity }}</td>
-                    <td class="text-right">Lps {{ number_format($part->unit_price, 2) }}</td>
-                    <td class="text-right">Lps {{ number_format($part->subtotal, 2) }}</td>
+                    <td class="text-right">L {{ number_format($part->unit_price, 2) }}</td>
+                    <td class="text-right">L {{ number_format($part->subtotal, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -219,9 +219,9 @@
     {{-- Totales --}}
     <div class="totals-wrap">
         <table class="totals-table">
-            <tr><td>Servicios:</td><td class="text-right">Lps {{ number_format($wo->subtotal_services, 2) }}</td></tr>
-            <tr><td>Repuestos:</td><td class="text-right">Lps {{ number_format($wo->subtotal_parts, 2) }}</td></tr>
-            <tr class="total-row"><td>TOTAL:</td><td class="text-right">Lps {{ number_format($wo->total, 2) }}</td></tr>
+            <tr><td>Servicios:</td><td class="text-right">L {{ number_format($wo->subtotal_services, 2) }}</td></tr>
+            <tr><td>Repuestos:</td><td class="text-right">L {{ number_format($wo->subtotal_parts, 2) }}</td></tr>
+            <tr class="total-row"><td>TOTAL:</td><td class="text-right">L {{ number_format($wo->total, 2) }}</td></tr>
         </table>
     </div>
 

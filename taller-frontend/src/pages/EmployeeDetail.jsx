@@ -620,7 +620,7 @@ export default function EmployeeDetail() {
               {errB.bonus_month && <p className="mt-1 text-xs text-red-500">{errB.bonus_month.message}</p>}
             </div>
             <div>
-              <label className="label">Monto (Lps) *</label>
+              <label className="label">Monto (L) *</label>
               <input {...regB('amount')} type="number" step="0.01" min="0.01" className="input" placeholder="0.00" />
               {errB.amount && <p className="mt-1 text-xs text-red-500">{errB.amount.message}</p>}
             </div>
@@ -690,7 +690,7 @@ export default function EmployeeDetail() {
               {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
             </div>
             <div>
-              <label className="label">Salario quincenal (Lps) *</label>
+              <label className="label">Salario quincenal (L) *</label>
               <input {...register('biweekly_salary')} type="number" step="0.01" className="input" placeholder="0.00" />
               {errors.biweekly_salary && <p className="mt-1 text-xs text-red-500">{errors.biweekly_salary.message}</p>}
             </div>

@@ -67,8 +67,8 @@ class InvoiceService
         $message = urlencode(
             "Estimado/a {$invoice->workOrder?->customer_name},\n" .
             "Le informamos que su factura #{$invoice->number} está lista.\n" .
-            "Total: Lps " . number_format($invoice->total, 2) . "\n" .
-            "Saldo pendiente: Lps " . number_format($invoice->balance, 2) . "\n" .
+            "Total: L " . number_format($invoice->total, 2) . "\n" .
+            "Saldo pendiente: L " . number_format($invoice->balance, 2) . "\n" .
             "Taller Mecánico - Gracias por su preferencia."
         );
 

@@ -38,7 +38,7 @@ const METHOD_ICONS = {
 }
 
 const exportCsv = (rows) => {
-  const headers = ['Fecha', 'Factura', 'OT', 'Cliente', 'Método', 'Monto (Lps)', 'Referencia']
+  const headers = ['Fecha', 'Factura', 'OT', 'Cliente', 'Método', 'Monto (L)', 'Referencia']
   const lines = rows.map((r) => [
     r.payment_date,
     r.invoice?.number ?? '',
@@ -275,7 +275,7 @@ export default function Payments() {
               </select>
             </div>
             <div>
-              <label className="label">Monto (Lps) *</label>
+              <label className="label">Monto (L) *</label>
               <input {...register('amount')} type="number" step="0.01" min="0.01" className="input" />
               {errors.amount && <p className="mt-1 text-xs text-red-500">{errors.amount.message}</p>}
             </div>
