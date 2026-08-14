@@ -106,7 +106,17 @@ class InventoryController extends Controller
             'reason' => 'nullable|string|max:150',
             'unit_cost' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
+            'record_payment'   => 'nullable|boolean',
+            'payment_amount'   => 'required_if:record_payment,true|numeric|min:0.01',
+            'payment_status'   => 'nullable|in:pagado,pendiente',
+            'payment_method'   => 'nullable|in:efectivo,transferencia,tarjeta,cheque,otro',
+            'payment_date'     => 'nullable|date',
+            'payment_reference' => 'nullable|string|max:100',
         ]);
+
+        if (($data['record_payment'] ?? false) && ! $inventory->supplier_id) {
+            return response()->json(['message' => 'Este repuesto no tiene un proveedor asignado'], 422);
+        }
 
         return DB::transaction(function () use ($data, $inventory, $request) {
             $stockBefore = $inventory->stock;
@@ -132,9 +142,24 @@ class InventoryController extends Controller
                 'notes' => $data['notes'] ?? null,
             ]);
 
+            $payment = null;
+            if ($data['record_payment'] ?? false) {
+                $payment = \App\Models\SupplierPayment::create([
+                    'supplier_id'           => $inventory->supplier_id,
+                    'inventory_movement_id' => $movement->id,
+                    'user_id'               => $request->user()->id,
+                    'amount'                => $data['payment_amount'],
+                    'status'                => $data['payment_status'] ?? 'pagado',
+                    'method'                => $data['payment_method'] ?? null,
+                    'payment_date'          => $data['payment_date'] ?? now()->toDateString(),
+                    'reference'             => $data['payment_reference'] ?? null,
+                ]);
+            }
+
             return response()->json([
                 'inventory' => $inventory,
                 'movement' => $movement,
+                'payment' => $payment,
             ]);
         });
     }

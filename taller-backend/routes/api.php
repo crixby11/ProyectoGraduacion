@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\EmployeeBonusController;
 use App\Http\Controllers\Api\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\EmployeeFileController;
 use App\Http\Controllers\Api\V1\EmployeeStatsController;
+use App\Http\Controllers\Api\V1\GeneralFileController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\PaymentController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\VehicleController;
 use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\SupplierPaymentController;
 use App\Http\Controllers\Api\V1\WorkOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,6 +59,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // Proveedores
     Route::apiResource('suppliers', SupplierController::class);
+    Route::get('supplier-payments', [SupplierPaymentController::class, 'index']);
+    Route::put('supplier-payments/{supplierPayment}', [SupplierPaymentController::class, 'update']);
 
     // Inventario
     Route::get('inventory/low-stock', [InventoryController::class, 'lowStock']);
@@ -96,6 +100,12 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Configuración del taller
     Route::get('settings', [SettingController::class, 'index']);
     Route::put('settings', [SettingController::class, 'update']);
+
+    // Archivos generales
+    Route::get('general-files', [GeneralFileController::class, 'index']);
+    Route::post('general-files', [GeneralFileController::class, 'store']);
+    Route::get('general-files/{generalFile}/download', [GeneralFileController::class, 'download']);
+    Route::delete('general-files/{generalFile}', [GeneralFileController::class, 'destroy']);
 
     // Auditoría / historial de actividad
     Route::get('activity-logs', [ActivityLogController::class, 'index']);

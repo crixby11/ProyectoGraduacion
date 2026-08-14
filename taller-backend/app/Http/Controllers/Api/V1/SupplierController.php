@@ -46,9 +46,15 @@ class SupplierController extends Controller
 
     public function show(Supplier $supplier)
     {
-        return response()->json($supplier->loadCount('inventory')->load([
+        $supplier->loadCount('inventory')->load([
             'inventory' => fn ($q) => $q->select('id', 'name', 'sku', 'category', 'supplier_id', 'stock', 'min_stock', 'active')->orderBy('name'),
-        ]));
+            'payments'  => fn ($q) => $q->with('inventoryMovement.inventoryItem:id,name')->latest(),
+        ]);
+
+        $supplier->setAttribute('total_paid', (float) $supplier->payments->where('status', 'pagado')->sum('amount'));
+        $supplier->setAttribute('total_pending', (float) $supplier->payments->where('status', 'pendiente')->sum('amount'));
+
+        return response()->json($supplier);
     }
 
     public function update(Request $request, Supplier $supplier)

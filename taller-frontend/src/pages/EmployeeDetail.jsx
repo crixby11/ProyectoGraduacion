@@ -6,13 +6,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   ArrowLeft, Edit2, ClipboardList, Phone, Mail, Wrench, Plus, Gift,
-  Paperclip, FileText, Image, File, Trash2, Download, BarChart2,
+  Paperclip, Trash2, Download, BarChart2,
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { fmtDate, fmtMoney } from '../utils/date'
+import { fmtDate, fmtMoney, fmtFileSize } from '../utils/date'
 import { isValidPhone, fmtPhone } from '../utils/hn'
 import toast from 'react-hot-toast'
 import {
@@ -22,6 +22,7 @@ import {
 import Modal from '../components/ui/Modal'
 import StatusBadge from '../components/ui/StatusBadge'
 import FileUploadZone from '../components/ui/FileUploadZone'
+import FileTypeIcon from '../components/ui/FileTypeIcon'
 
 const schema = z.object({
   first_name:       z.string().min(1, 'Requerido'),
@@ -75,26 +76,6 @@ const fmtMonthShort = (yyyyMm) => {
   if (!yyyyMm) return ''
   const [y, m] = yyyyMm.slice(0, 7).split('-')
   return `${MONTHS_SHORT[parseInt(m, 10) - 1]} ${y.slice(2)}`
-}
-
-const fmtFileSize = (bytes) => {
-  if (!bytes) return '0 B'
-  if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(1)} MB`
-  if (bytes >= 1024)    return `${(bytes / 1024).toFixed(0)} KB`
-  return `${bytes} B`
-}
-
-function FileTypeIcon({ mime }) {
-  if (!mime) return <File size={20} className="text-gray-400 shrink-0" />
-  if (mime.startsWith('image/'))
-    return <Image size={20} className="text-blue-400 shrink-0" />
-  if (mime === 'application/pdf')
-    return <FileText size={20} className="text-red-400 shrink-0" />
-  if (mime.includes('word') || mime.includes('document'))
-    return <FileText size={20} className="text-blue-500 shrink-0" />
-  if (mime.includes('sheet') || mime.includes('excel') || mime.includes('csv'))
-    return <FileText size={20} className="text-green-500 shrink-0" />
-  return <File size={20} className="text-gray-400 shrink-0" />
 }
 
 export default function EmployeeDetail() {

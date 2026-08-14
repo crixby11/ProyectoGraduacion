@@ -33,4 +33,9 @@ class InventoryMovement extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function supplierPayment()
+    {
+        return $this->hasOne(SupplierPayment::class);
+    }
 }

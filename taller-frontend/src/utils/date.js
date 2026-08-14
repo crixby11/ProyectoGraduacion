@@ -1,3 +1,11 @@
+/** Formatea tamaño de archivo en B/KB/MB */
+export function fmtFileSize(bytes) {
+  if (!bytes) return '0 B'
+  if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(1)} MB`
+  if (bytes >= 1024)    return `${(bytes / 1024).toFixed(0)} KB`
+  return `${bytes} B`
+}
+
 /** Formato canónico de moneda Lempiras — siempre 2 decimales */
 export function fmtMoney(n) {
   return `L ${Number(n ?? 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`

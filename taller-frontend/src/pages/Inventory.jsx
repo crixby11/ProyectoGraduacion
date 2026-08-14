@@ -54,6 +54,15 @@ const adjustSchema = z.object({
   type: z.enum(['entrada', 'salida']),
   quantity: z.coerce.number().min(1),
   reason: z.string().optional(),
+  record_payment: z.boolean().optional(),
+  payment_amount: z.coerce.number().optional(),
+  payment_status: z.enum(['pagado', 'pendiente']).optional(),
+  payment_method: z.string().optional(),
+  payment_date: z.string().optional(),
+  payment_reference: z.string().optional(),
+}).refine((d) => !d.record_payment || (d.payment_amount && d.payment_amount > 0), {
+  message: 'Ingresa el monto del pago',
+  path: ['payment_amount'],
 })
 
 
@@ -105,7 +114,13 @@ export default function Inventory() {
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
   const watchedCategory = watch('category')
-  const { register: regAdj, handleSubmit: handleAdj, reset: resetAdj, formState: { errors: adjErrors } } = useForm({ resolver: zodResolver(adjustSchema) })
+  const {
+    register: regAdj, handleSubmit: handleAdj, reset: resetAdj, watch: watchAdj, setValue: setValueAdj,
+    formState: { errors: adjErrors },
+  } = useForm({ resolver: zodResolver(adjustSchema) })
+  const adjType = watchAdj('type')
+  const adjQuantity = watchAdj('quantity')
+  const recordPayment = watchAdj('record_payment')
 
   const save = useMutation({
     mutationFn: (d) => editing ? updateInventoryItem(editing.id, d) : createInventoryItem(d),
@@ -119,9 +134,14 @@ export default function Inventory() {
 
   const adjust = useMutation({
     mutationFn: (d) => adjustInventory(adjustModal.id, d),
-    onSuccess: () => {
+    onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: ['inventory'] })
-      toast.success('Stock ajustado')
+      qc.invalidateQueries({ queryKey: ['inventory-movements', adjustModal.id] })
+      if (vars.record_payment) {
+        qc.invalidateQueries({ queryKey: ['supplier', String(adjustModal.supplier_id)] })
+        qc.invalidateQueries({ queryKey: ['suppliers'] })
+      }
+      toast.success(vars.record_payment ? 'Stock ajustado y pago registrado' : 'Stock ajustado')
       setAdjustModal(null)
       resetAdj()
     },
@@ -395,6 +415,67 @@ export default function Inventory() {
             <label className="label">Motivo</label>
             <input {...regAdj('reason')} className="input" placeholder="Compra, merma, devolución..." />
           </div>
+
+          {adjType === 'entrada' && adjustModal?.supplier_id && (
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  {...regAdj('record_payment')}
+                  className="w-4 h-4 text-primary-600"
+                  onChange={(e) => {
+                    regAdj('record_payment').onChange(e)
+                    if (e.target.checked) {
+                      setValueAdj('payment_date', new Date().toISOString().slice(0, 10))
+                      setValueAdj('payment_amount', Number(((adjQuantity || 0) * (adjustModal?.cost ?? 0)).toFixed(2)) || undefined)
+                    }
+                  }}
+                />
+                <span>Registrar pago a <strong>{adjustModal?.supplier?.name}</strong></span>
+              </label>
+
+              {recordPayment && (
+                <div className="space-y-3 pl-6">
+                  <div>
+                    <label className="label">Monto (L) *</label>
+                    <input {...regAdj('payment_amount')} type="number" step="0.01" className="input" placeholder="0.00" />
+                    {adjErrors.payment_amount && <p className="mt-1 text-xs text-red-500">{adjErrors.payment_amount.message}</p>}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="label">Estado</label>
+                      <select {...regAdj('payment_status')} className="input">
+                        <option value="pagado">Pagado</option>
+                        <option value="pendiente">Pendiente</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Método</label>
+                      <select {...regAdj('payment_method')} className="input">
+                        <option value="">— Sin especificar —</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="otro">Otro</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="label">Fecha</label>
+                      <input {...regAdj('payment_date')} type="date" className="input" />
+                    </div>
+                    <div>
+                      <label className="label">Referencia</label>
+                      <input {...regAdj('payment_reference')} className="input" placeholder="N° factura..." />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setAdjustModal(null)} className="btn-secondary">Cancelar</button>
             <button type="submit" disabled={adjust.isPending} className="btn-primary">
