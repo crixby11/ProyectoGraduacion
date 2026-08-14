@@ -49,6 +49,15 @@ export default function Services() {
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
 
+  const toggleActive = useMutation({
+    mutationFn: (s) => updateService(s.id, { active: !s.active }),
+    onSuccess: (_res, s) => {
+      qc.invalidateQueries({ queryKey: ['services'] })
+      toast.success(s.active ? 'Servicio desactivado' : 'Servicio activado')
+    },
+    onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
+  })
+
 
   const openNew = () => { setEditing(null); reset({ estimated_hours: 1, base_price: 0 }); setModalOpen(true) }
   const openEdit = (s) => { setEditing(s); reset({ ...s, active: !!s.active }); setModalOpen(true) }
@@ -61,7 +70,17 @@ export default function Services() {
     { key: 'base_price', label: 'Precio base', render: (r) => fmtMoney(r.base_price) },
     {
       key: 'active', label: 'Estado',
-      render: (r) => <span className={`badge ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{r.active ? 'Activo' : 'Inactivo'}</span>,
+      render: (r) => (
+        <button
+          type="button"
+          onClick={() => toggleActive.mutate(r)}
+          disabled={toggleActive.isPending}
+          title={r.active ? 'Clic para desactivar' : 'Clic para activar'}
+          className={`badge cursor-pointer transition-opacity hover:opacity-70 disabled:opacity-50 ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+        >
+          {r.active ? 'Activo' : 'Inactivo'}
+        </button>
+      ),
     },
     {
       key: 'actions', label: '', width: '80px',
