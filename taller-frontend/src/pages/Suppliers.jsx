@@ -54,6 +54,16 @@ export default function Suppliers() {
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
 
+  const toggleActive = useMutation({
+    mutationFn: (s) => updateSupplier(s.id, { active: !s.active }),
+    onSuccess: (_res, s) => {
+      qc.invalidateQueries({ queryKey: ['suppliers'] })
+      qc.invalidateQueries({ queryKey: ['suppliers-all'] })
+      toast.success(s.active ? 'Proveedor desactivado' : 'Proveedor activado')
+    },
+    onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
+  })
+
 
   const openNew = () => { setEditing(null); reset({ active: true }); setModalOpen(true) }
   const openEdit = (s) => { setEditing(s); reset({ ...s, active: !!s.active }); setModalOpen(true) }
@@ -83,7 +93,17 @@ export default function Suppliers() {
     { key: 'inventory_count', label: 'Repuestos', render: (r) => <span className="tabular-nums">{r.inventory_count ?? 0}</span> },
     {
       key: 'active', label: 'Estado',
-      render: (r) => <span className={`badge ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{r.active ? 'Activo' : 'Inactivo'}</span>,
+      render: (r) => (
+        <button
+          type="button"
+          onClick={() => toggleActive.mutate(r)}
+          disabled={toggleActive.isPending}
+          title={r.active ? 'Clic para desactivar' : 'Clic para activar'}
+          className={`badge cursor-pointer transition-opacity hover:opacity-70 disabled:opacity-50 ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+        >
+          {r.active ? 'Activo' : 'Inactivo'}
+        </button>
+      ),
     },
     {
       key: 'actions', label: '', width: '80px',

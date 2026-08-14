@@ -78,6 +78,15 @@ export default function Employees() {
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
 
+  const toggleActive = useMutation({
+    mutationFn: (emp) => updateEmployee(emp.id, { active: !emp.active }),
+    onSuccess: (_res, emp) => {
+      qc.invalidateQueries({ queryKey: ['employees'] })
+      toast.success(emp.active ? 'Empleado desactivado' : 'Empleado activado')
+    },
+    onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
+  })
+
 
   const openNew = () => { setEditing(null); reset({ hourly_rate: 0 }); setSpecialtyMode('list'); setModalOpen(true) }
   const openEdit = (e) => { setEditing(e); reset({ ...e, active: !!e.active }); setSpecialtyMode(SPECIALTIES.includes(e.specialty) ? 'list' : 'custom'); setModalOpen(true) }
@@ -90,7 +99,17 @@ export default function Employees() {
     { key: 'biweekly_salary', label: 'Salario quincenal', render: (r) => fmtMoney(r.biweekly_salary) },
     {
       key: 'active', label: 'Estado',
-      render: (r) => <span className={`badge ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{r.active ? 'Activo' : 'Inactivo'}</span>,
+      render: (r) => (
+        <button
+          type="button"
+          onClick={() => toggleActive.mutate(r)}
+          disabled={toggleActive.isPending}
+          title={r.active ? 'Clic para desactivar' : 'Clic para activar'}
+          className={`badge cursor-pointer transition-opacity hover:opacity-70 disabled:opacity-50 ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+        >
+          {r.active ? 'Activo' : 'Inactivo'}
+        </button>
+      ),
     },
     {
       key: 'actions', label: '', width: '100px',
