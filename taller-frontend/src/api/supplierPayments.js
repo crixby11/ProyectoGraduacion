@@ -1,4 +1,4 @@
 import api from './axios'
 
-export const getSupplierPayments = (params) => api.get('/supplier-payments', { params })
-export const updateSupplierPayment = (id, data) => api.put(`/supplier-payments/${id}`, data)
+export const addSupplierPurchasePayment = (purchaseId, data) =>
+  api.post(`/supplier-purchases/${purchaseId}/payments`, data)

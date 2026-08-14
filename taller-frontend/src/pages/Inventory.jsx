@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -55,13 +55,16 @@ const adjustSchema = z.object({
   quantity: z.coerce.number().min(1),
   reason: z.string().optional(),
   record_payment: z.boolean().optional(),
+  purchase_total: z.coerce.number().optional(),
   payment_amount: z.coerce.number().optional(),
-  payment_status: z.enum(['pagado', 'pendiente']).optional(),
   payment_method: z.string().optional(),
   payment_date: z.string().optional(),
   payment_reference: z.string().optional(),
-}).refine((d) => !d.record_payment || (d.payment_amount && d.payment_amount > 0), {
-  message: 'Ingresa el monto del pago',
+}).refine((d) => !d.record_payment || (d.purchase_total && d.purchase_total > 0), {
+  message: 'Ingresa el total de la compra',
+  path: ['purchase_total'],
+}).refine((d) => !d.record_payment || !d.payment_amount || d.payment_amount <= d.purchase_total, {
+  message: 'No puede ser mayor al total de la compra',
   path: ['payment_amount'],
 })
 
@@ -121,6 +124,13 @@ export default function Inventory() {
   const adjType = watchAdj('type')
   const adjQuantity = watchAdj('quantity')
   const recordPayment = watchAdj('record_payment')
+
+  // Mantiene el total de la compra sincronizado con cantidad × costo del repuesto
+  useEffect(() => {
+    if (recordPayment && adjustModal?.cost) {
+      setValueAdj('purchase_total', Number(((adjQuantity || 0) * adjustModal.cost).toFixed(2)))
+    }
+  }, [adjQuantity, recordPayment, adjustModal, setValueAdj])
 
   const save = useMutation({
     mutationFn: (d) => editing ? updateInventoryItem(editing.id, d) : createInventoryItem(d),
@@ -427,28 +437,31 @@ export default function Inventory() {
                     regAdj('record_payment').onChange(e)
                     if (e.target.checked) {
                       setValueAdj('payment_date', new Date().toISOString().slice(0, 10))
-                      setValueAdj('payment_amount', Number(((adjQuantity || 0) * (adjustModal?.cost ?? 0)).toFixed(2)) || undefined)
                     }
                   }}
                 />
-                <span>Registrar pago a <strong>{adjustModal?.supplier?.name}</strong></span>
+                <span>Registrar compra a <strong>{adjustModal?.supplier?.name}</strong></span>
               </label>
 
               {recordPayment && (
                 <div className="space-y-3 pl-6">
                   <div>
-                    <label className="label">Monto (L) *</label>
-                    <input {...regAdj('payment_amount')} type="number" step="0.01" className="input" placeholder="0.00" />
+                    <label className="label">Total de la compra (L) *</label>
+                    <input {...regAdj('purchase_total')} type="number" step="0.01" className="input" placeholder="0.00" />
+                    {adjErrors.purchase_total && <p className="mt-1 text-xs text-red-500">{adjErrors.purchase_total.message}</p>}
+                    <p className="mt-1 text-xs text-gray-400">
+                      {adjustModal?.cost
+                        ? 'Calculado automáticamente (cantidad × costo registrado). Puedes ajustarlo si el precio real fue distinto.'
+                        : 'Este repuesto no tiene costo registrado — ingresa el total manualmente.'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="label">Pagar ahora (L)</label>
+                    <input {...regAdj('payment_amount')} type="number" step="0.01" className="input" placeholder="0.00 = queda pendiente" />
                     {adjErrors.payment_amount && <p className="mt-1 text-xs text-red-500">{adjErrors.payment_amount.message}</p>}
+                    <p className="mt-1 text-xs text-gray-400">Déjalo en blanco o en 0 si no vas a pagar nada todavía. Puedes abonar menos del total para un pago parcial.</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="label">Estado</label>
-                      <select {...regAdj('payment_status')} className="input">
-                        <option value="pagado">Pagado</option>
-                        <option value="pendiente">Pendiente</option>
-                      </select>
-                    </div>
                     <div>
                       <label className="label">Método</label>
                       <select {...regAdj('payment_method')} className="input">
@@ -460,16 +473,14 @@ export default function Inventory() {
                         <option value="otro">Otro</option>
                       </select>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="label">Fecha</label>
                       <input {...regAdj('payment_date')} type="date" className="input" />
                     </div>
-                    <div>
-                      <label className="label">Referencia</label>
-                      <input {...regAdj('payment_reference')} className="input" placeholder="N° factura..." />
-                    </div>
+                  </div>
+                  <div>
+                    <label className="label">Referencia</label>
+                    <input {...regAdj('payment_reference')} className="input" placeholder="N° factura..." />
                   </div>
                 </div>
               )}

@@ -12,8 +12,8 @@ class SupplierPayment extends Model
     use HasFactory, LogsActivity;
 
     protected $fillable = [
-        'supplier_id', 'inventory_movement_id', 'user_id',
-        'amount', 'status', 'method', 'payment_date', 'reference', 'notes',
+        'supplier_purchase_id', 'user_id',
+        'amount', 'method', 'payment_date', 'reference', 'notes',
     ];
 
     protected $casts = [
@@ -30,14 +30,9 @@ class SupplierPayment extends Model
             ->useLogName('pagos_proveedores');
     }
 
-    public function supplier()
+    public function purchase()
     {
-        return $this->belongsTo(Supplier::class);
-    }
-
-    public function inventoryMovement()
-    {
-        return $this->belongsTo(InventoryMovement::class);
+        return $this->belongsTo(SupplierPurchase::class, 'supplier_purchase_id');
     }
 
     public function user()

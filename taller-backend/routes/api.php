@@ -59,8 +59,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // Proveedores
     Route::apiResource('suppliers', SupplierController::class);
-    Route::get('supplier-payments', [SupplierPaymentController::class, 'index']);
-    Route::put('supplier-payments/{supplierPayment}', [SupplierPaymentController::class, 'update']);
+    Route::post('supplier-purchases/{supplierPurchase}/payments', [SupplierPaymentController::class, 'store']);
 
     // Inventario
     Route::get('inventory/low-stock', [InventoryController::class, 'lowStock']);
