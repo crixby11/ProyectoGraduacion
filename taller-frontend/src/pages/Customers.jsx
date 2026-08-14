@@ -161,7 +161,7 @@ export default function Customers() {
               <input {...register('second_last_name')} className="input" placeholder="López" />
             </div>
             <div>
-              <label className="label">Teléfono</label>
+              <label className="label">Teléfono *</label>
               <input
                 {...register('phone')}
                 onChange={(e) => setValue('phone', fmtPhone(e.target.value), { shouldValidate: true })}

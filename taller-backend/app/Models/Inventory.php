@@ -24,7 +24,7 @@ class Inventory extends Model
     protected $table = 'inventory';
 
     protected $fillable = [
-        'name', 'sku', 'brand', 'supplier', 'category', 'description',
+        'name', 'sku', 'brand', 'supplier_id', 'category', 'description',
         'stock', 'min_stock', 'cost', 'sale_price', 'unit', 'active', 'notes',
     ];
 
@@ -33,6 +33,11 @@ class Inventory extends Model
         'sale_price' => 'decimal:2',
         'active' => 'boolean',
     ];
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
 
     public function woParts()
     {

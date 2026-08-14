@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\VehicleController;
 use App\Http\Controllers\Api\V1\SettingController;
+use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\WorkOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -53,6 +54,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // Catálogo de servicios
     Route::apiResource('services', ServiceController::class);
+
+    // Proveedores
+    Route::apiResource('suppliers', SupplierController::class);
 
     // Inventario
     Route::get('inventory/low-stock', [InventoryController::class, 'lowStock']);

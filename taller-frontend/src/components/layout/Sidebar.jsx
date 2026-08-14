@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Car, Wrench, ClipboardList,
   Package, FileText, DollarSign, Calendar, CalendarCheck,
-  Settings, Cog, X, BarChart2, History,
+  Settings, Cog, X, BarChart2, History, Truck,
 } from 'lucide-react'
 import logo from '../../assets/logo.jpeg'
 
@@ -35,6 +35,7 @@ const navGroups = [
     label: 'Finanzas',
     items: [
       { to: '/inventory', icon: Package,   label: 'Inventario' },
+      { to: '/suppliers', icon: Truck,     label: 'Proveedores' },
       { to: '/invoices',  icon: FileText,  label: 'Facturación' },
       { to: '/payments',  icon: DollarSign, label: 'Pagos' },
     ],

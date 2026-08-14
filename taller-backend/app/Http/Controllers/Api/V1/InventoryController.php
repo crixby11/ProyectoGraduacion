@@ -12,7 +12,7 @@ class InventoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Inventory::query();
+        $query = Inventory::query()->with('supplier:id,name');
 
         if ($request->filled('search')) {
             $s = $request->search;
@@ -32,6 +32,10 @@ class InventoryController extends Controller
             $query->where('category', $request->category);
         }
 
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+
         if ($request->has('active') && $request->input('active') !== '') {
             $query->where('active', $request->boolean('active'));
         }
@@ -45,7 +49,7 @@ class InventoryController extends Controller
             'name' => 'required|string|max:150',
             'sku' => 'nullable|string|max:60|unique:inventory,sku',
             'brand' => 'nullable|string|max:60',
-            'supplier' => 'nullable|string|max:150',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'category' => 'nullable|string|max:80',
             'description' => 'nullable|string',
             'stock' => 'required|integer|min:0',
@@ -62,7 +66,7 @@ class InventoryController extends Controller
 
     public function show(Inventory $inventory)
     {
-        return response()->json($inventory->load('movements'));
+        return response()->json($inventory->load(['movements', 'supplier']));
     }
 
     public function update(Request $request, Inventory $inventory)
@@ -71,7 +75,7 @@ class InventoryController extends Controller
             'name' => 'sometimes|required|string|max:150',
             'sku' => 'nullable|string|max:60|unique:inventory,sku,' . $inventory->id,
             'brand' => 'nullable|string|max:60',
-            'supplier' => 'nullable|string|max:150',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'category' => 'nullable|string|max:80',
             'description' => 'nullable|string',
             'min_stock' => 'nullable|integer|min:0',

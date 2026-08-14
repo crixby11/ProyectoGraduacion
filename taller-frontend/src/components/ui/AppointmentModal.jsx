@@ -128,7 +128,7 @@ export default function AppointmentModal({
     enabled: open,
     staleTime: 60000,
   })
-  const { data: vehicles } = useQuery({
+  const { data: vehicles, isFetching: fetchingVehicles } = useQuery({
     queryKey: ['vehicles-by-customer', watchedCustomerId],
     queryFn: () => getVehicles({ customer_id: watchedCustomerId, per_page: 50 }).then(r => r.data.data),
     enabled: !!watchedCustomerId && !isWalkIn && open,
@@ -399,8 +399,8 @@ export default function AppointmentModal({
                     </button>
                   </div>
                   <div>
-                    <label className="label text-xs">Teléfono</label>
-                    <input {...regC('phone')} className="input text-sm" placeholder="70001234" />
+                    <label className="label text-xs">Teléfono *</label>
+                    <input {...regC('phone')} required className="input text-sm" placeholder="70001234" />
                   </div>
                   {dupCustomer ? (
                     <div className="flex items-start gap-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
@@ -446,7 +446,9 @@ export default function AppointmentModal({
               {watchedCustomerId && !quickCreate && (
                 <div>
                   <label className="label">Vehículo</label>
-                  {(vehicles ?? []).length > 0 ? (
+                  {fetchingVehicles ? (
+                    <p className="text-xs text-gray-400 py-1">Cargando vehículos...</p>
+                  ) : (vehicles ?? []).length > 0 ? (
                     <select {...register('vehicle_id')} className="input">
                       <option value="">— Sin especificar vehículo —</option>
                       {vehicles.map(v => (

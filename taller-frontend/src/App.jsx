@@ -13,6 +13,8 @@ import Employees from './pages/Employees'
 import EmployeeDetail from './pages/EmployeeDetail'
 import EmployeeStats from './pages/EmployeeStats'
 import Services from './pages/Services'
+import Suppliers from './pages/Suppliers'
+import SupplierDetail from './pages/SupplierDetail'
 import Inventory from './pages/Inventory'
 import WorkOrders from './pages/WorkOrders/index'
 import WorkOrderDetail from './pages/WorkOrders/WorkOrderDetail'
@@ -61,6 +63,8 @@ export default function App() {
               <Route path="employees/stats" element={<EmployeeStats />} />
               <Route path="employees/:id" element={<EmployeeDetail />} />
               <Route path="services" element={<Services />} />
+              <Route path="suppliers" element={<Suppliers />} />
+              <Route path="suppliers/:id" element={<SupplierDetail />} />
               <Route path="inventory" element={<Inventory />} />
               <Route path="work-orders" element={<WorkOrders />} />
               <Route path="work-orders/:id" element={<WorkOrderDetail />} />

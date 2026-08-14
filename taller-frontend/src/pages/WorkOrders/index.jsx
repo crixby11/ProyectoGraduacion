@@ -95,7 +95,7 @@ export default function WorkOrders() {
   const showModelSelect = modelsForBrand.length > 0 && modelMode === 'list'
 
   // Vehículos: carga solo cuando hay un cliente seleccionado (evita cargar 500 registros)
-  const { data: filteredVehicles = [] } = useQuery({
+  const { data: filteredVehicles = [], isFetching: fetchingVehicles } = useQuery({
     queryKey: ['vehicles-by-customer', selectedCustomerId],
     queryFn:  () => getVehicles({ customer_id: selectedCustomerId, per_page: 100 }).then((r) => r.data.data),
     enabled:  !!selectedCustomerId && useExisting && modalOpen,
@@ -281,9 +281,19 @@ export default function WorkOrders() {
               </div>
               <div>
                 <label className="label">Vehículo</label>
-                <select {...register('vehicle_id')} className="input">
-                  <option value="">Seleccionar...</option>
-                  {filteredVehicles.map((v) => <option key={v.id} value={v.id}>{v.plate} — {v.brand} {v.model}</option>)}
+                <select {...register('vehicle_id')} className="input" disabled={fetchingVehicles}>
+                  {!selectedCustomerId ? (
+                    <option value="">Selecciona un cliente primero...</option>
+                  ) : fetchingVehicles ? (
+                    <option value="">Cargando vehículos...</option>
+                  ) : filteredVehicles.length === 0 ? (
+                    <option value="">Este cliente no tiene vehículos registrados</option>
+                  ) : (
+                    <>
+                      <option value="">Seleccionar...</option>
+                      {filteredVehicles.map((v) => <option key={v.id} value={v.id}>{v.plate} — {v.brand} {v.model}</option>)}
+                    </>
+                  )}
                 </select>
               </div>
             </div>

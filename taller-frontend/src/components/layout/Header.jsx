@@ -19,6 +19,7 @@ const PAGE_TITLES = {
   '/employees':    'Empleados',
   '/services':     'Servicios',
   '/inventory':    'Inventario',
+  '/suppliers':    'Proveedores',
   '/invoices':     'Facturación',
   '/payments':     'Pagos',
   '/calendar':     'Calendario',

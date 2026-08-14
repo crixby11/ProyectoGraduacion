@@ -39,13 +39,14 @@ class CustomerController extends Controller
             'second_name'      => 'nullable|string|max:100',
             'last_name'        => 'required|string|max:100',
             'second_last_name' => 'nullable|string|max:100',
-            'phone'            => ['nullable', 'string', 'max:20', Rule::unique('customers', 'phone')->whereNull('deleted_at')],
+            'phone'            => ['required', 'string', 'max:20', Rule::unique('customers', 'phone')->whereNull('deleted_at')],
             'email'            => 'nullable|email|max:150',
             'address'          => 'nullable|string|max:255',
             'id_number'        => 'nullable|string|max:30',
             'notes'            => 'nullable|string',
         ], [
-            'phone.unique' => 'Ya existe un cliente registrado con este teléfono.',
+            'phone.required' => 'El teléfono es obligatorio.',
+            'phone.unique'   => 'Ya existe un cliente registrado con este teléfono.',
         ]);
 
         $customer = Customer::create($data);
@@ -65,14 +66,15 @@ class CustomerController extends Controller
             'second_name'      => 'nullable|string|max:100',
             'last_name'        => 'sometimes|required|string|max:100',
             'second_last_name' => 'nullable|string|max:100',
-            'phone'            => ['nullable', 'string', 'max:20', Rule::unique('customers', 'phone')->ignore($customer->id)->whereNull('deleted_at')],
+            'phone'            => ['sometimes', 'required', 'string', 'max:20', Rule::unique('customers', 'phone')->ignore($customer->id)->whereNull('deleted_at')],
             'email'            => 'nullable|email|max:150',
             'address'          => 'nullable|string|max:255',
             'id_number'        => 'nullable|string|max:30',
             'active'           => 'nullable|boolean',
             'notes'            => 'nullable|string',
         ], [
-            'phone.unique' => 'Ya existe un cliente registrado con este teléfono.',
+            'phone.required' => 'El teléfono es obligatorio.',
+            'phone.unique'   => 'Ya existe un cliente registrado con este teléfono.',
         ]);
 
         $customer->update($data);

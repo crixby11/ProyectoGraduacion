@@ -167,7 +167,7 @@ export default function EmployeeStats() {
               {ranking.map((e, i) => (
                 <RankCard
                   key={e.id} rank={i + 1} employee={e}
-                  metric={e.total_revenue} metricLabel="ingresos" metricFmt={fmt}
+                  metric={e.total_revenue} metricLabel="ingresos" metricFmt={fmtMoney}
                 />
               ))}
             </div>

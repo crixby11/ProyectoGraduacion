@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Plus, Edit2, TrendingUp, AlertTriangle, Clock, ArrowDownCircle, ArrowUpCircle, Package } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getInventory, createInventoryItem, updateInventoryItem, adjustInventory, getCategories, getInventoryMovements } from '../api/inventory'
+import { getSuppliers } from '../api/suppliers'
 import { fmtMoney } from '../utils/date'
 import PageHeader from '../components/ui/PageHeader'
 import SearchInput from '../components/ui/SearchInput'
@@ -38,7 +39,7 @@ const schema = z.object({
   name: z.string().min(1, 'Requerido'),
   sku: z.string().optional(),
   brand: z.string().optional(),
-  supplier: z.string().optional(),
+  supplier_id: z.coerce.number().optional().or(z.literal('')),
   category: z.string().optional(),
   description: z.string().optional(),
   stock: z.coerce.number().min(0),
@@ -60,6 +61,7 @@ export default function Inventory() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [supplierFilter, setSupplierFilter] = useState('')
   const [activeFilter, setActiveFilter] = useState('')
   const [lowStock, setLowStock] = useState(false)
   const [page, setPage] = useState(1)
@@ -71,10 +73,11 @@ export default function Inventory() {
   const [historyPage, setHistoryPage] = useState(1)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['inventory', { search, categoryFilter, activeFilter, lowStock, page }],
+    queryKey: ['inventory', { search, categoryFilter, supplierFilter, activeFilter, lowStock, page }],
     queryFn: () => getInventory({
       search,
       category: categoryFilter || undefined,
+      supplier_id: supplierFilter || undefined,
       low_stock: lowStock || undefined,
       active: activeFilter !== '' ? activeFilter : undefined,
       page,
@@ -86,6 +89,11 @@ export default function Inventory() {
   const { data: categoriesData } = useQuery({
     queryKey: ['inventory-categories'],
     queryFn: () => getCategories().then((r) => r.data),
+  })
+
+  const { data: suppliers } = useQuery({
+    queryKey: ['suppliers-all'],
+    queryFn: () => getSuppliers({ active: true, per_page: 200 }).then((r) => r.data.data),
   })
 
   const { data: movementsData, isLoading: movementsLoading } = useQuery({
@@ -143,6 +151,7 @@ export default function Inventory() {
       ),
     },
     { key: 'brand', label: 'Marca' },
+    { key: 'supplier', label: 'Proveedor', render: (r) => r.supplier?.name ?? <span className="text-gray-300">—</span> },
     { key: 'category', label: 'Categoría' },
     {
       key: 'stock', label: 'Stock',
@@ -188,6 +197,10 @@ export default function Inventory() {
             <option value="">Todas las categorías</option>
             {(categoriesData ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
+          <select value={supplierFilter} onChange={(e) => { setSupplierFilter(e.target.value); setPage(1) }} className="input w-auto">
+            <option value="">Todos los proveedores</option>
+            {(suppliers ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
           <select value={activeFilter} onChange={(e) => { setActiveFilter(e.target.value); setPage(1) }} className="input w-auto">
             <option value="">Activos e inactivos</option>
             <option value="1">Solo activos</option>
@@ -220,8 +233,11 @@ export default function Inventory() {
               <input {...register('brand')} className="input" />
             </div>
             <div>
-              <label className="label">Casa de repuesto (Proveedor)</label>
-              <input {...register('supplier')} className="input" placeholder="Ej: Repuestos García, AutoZone..." />
+              <label className="label">Proveedor</label>
+              <select {...register('supplier_id')} className="input">
+                <option value="">— Sin proveedor —</option>
+                {(suppliers ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
             </div>
             <div>
               <label className="label">Categoría</label>
