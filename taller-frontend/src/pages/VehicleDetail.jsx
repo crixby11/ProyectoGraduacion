@@ -80,6 +80,7 @@ export default function VehicleDetail() {
           <div className="card p-4">
             <h3 className="font-semibold text-gray-800 mb-3">Especificaciones</h3>
             <dl className="space-y-2 text-sm">
+              <div><dt className="text-gray-500">Placa</dt><dd className="font-mono font-medium">{vehicle.plate}</dd></div>
               <div><dt className="text-gray-500">Marca</dt><dd className="font-medium">{vehicle.brand}</dd></div>
               <div><dt className="text-gray-500">Modelo</dt><dd className="font-medium">{vehicle.model}</dd></div>
               <div><dt className="text-gray-500">Año</dt><dd>{vehicle.year ?? '—'}</dd></div>

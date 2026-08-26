@@ -250,6 +250,42 @@ export default function Settings() {
                   <label className="label">RTN</label>
                   <input {...register('shop_rtn')} className="input" placeholder="0000-0000-000000" />
                 </div>
+
+                <div className="sm:col-span-2">
+                  <label className="label">Propietario</label>
+                  <input {...register('shop_owner')} className="input" placeholder="Nombre del propietario registrado ante la SAR" />
+                </div>
+              </div>
+            </div>
+
+            <div className="card p-6 space-y-5">
+              <div>
+                <h2 className="font-semibold text-gray-800">Facturación (CAI)</h2>
+                <p className="text-xs text-gray-400 mt-1">Datos del rango de facturación autorizado por la SAR. El sistema numera las facturas con el correlativo oficial.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="label">CAI</label>
+                  <input {...register('invoice_cai')} className="input font-mono" placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX-XXXXXX-XX" />
+                </div>
+                <div>
+                  <label className="label">Rango autorizado — desde</label>
+                  <input {...register('invoice_range_start')} className="input font-mono" placeholder="000-001-01-00000001" />
+                </div>
+                <div>
+                  <label className="label">Rango autorizado — hasta</label>
+                  <input {...register('invoice_range_end')} className="input font-mono" placeholder="000-001-01-00001000" />
+                </div>
+                <div>
+                  <label className="label">Fecha límite de emisión</label>
+                  <input {...register('invoice_deadline')} type="date" className="input" />
+                </div>
+                <div>
+                  <label className="label">Próximo correlativo a usar</label>
+                  <input {...register('invoice_next_correlativo')} type="number" min="1" className="input" placeholder="1" />
+                  <p className="mt-1 text-xs text-gray-400">Se incrementa solo con cada factura. Ajústalo si ya usaste números en el talonario físico.</p>
+                </div>
               </div>
             </div>
 

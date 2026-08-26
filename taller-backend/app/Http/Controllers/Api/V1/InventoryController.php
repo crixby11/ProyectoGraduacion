@@ -106,21 +106,7 @@ class InventoryController extends Controller
             'reason' => 'nullable|string|max:150',
             'unit_cost' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
-            'record_payment'    => 'nullable|boolean',
-            'purchase_total'    => 'required_if:record_payment,true|numeric|min:0.01',
-            'payment_amount'    => 'nullable|numeric|min:0',
-            'payment_method'    => 'nullable|in:efectivo,transferencia,tarjeta,cheque,otro',
-            'payment_date'      => 'nullable|date',
-            'payment_reference' => 'nullable|string|max:100',
         ]);
-
-        if (($data['record_payment'] ?? false) && ! $inventory->supplier_id) {
-            return response()->json(['message' => 'Este repuesto no tiene un proveedor asignado'], 422);
-        }
-
-        if (($data['payment_amount'] ?? 0) > ($data['purchase_total'] ?? 0)) {
-            return response()->json(['message' => 'El monto a pagar no puede superar el total de la compra'], 422);
-        }
 
         return DB::transaction(function () use ($data, $inventory, $request) {
             $stockBefore = $inventory->stock;
@@ -146,31 +132,9 @@ class InventoryController extends Controller
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            $purchase = null;
-            if ($data['record_payment'] ?? false) {
-                $purchase = \App\Models\SupplierPurchase::create([
-                    'supplier_id'           => $inventory->supplier_id,
-                    'inventory_movement_id' => $movement->id,
-                    'total'                 => $data['purchase_total'],
-                ]);
-
-                if (($data['payment_amount'] ?? 0) > 0) {
-                    $purchase->payments()->create([
-                        'user_id'      => $request->user()->id,
-                        'amount'       => $data['payment_amount'],
-                        'method'       => $data['payment_method'] ?? null,
-                        'payment_date' => $data['payment_date'] ?? now()->toDateString(),
-                        'reference'    => $data['payment_reference'] ?? null,
-                    ]);
-                }
-
-                $purchase->recalculate();
-            }
-
             return response()->json([
                 'inventory' => $inventory,
                 'movement' => $movement,
-                'purchase' => $purchase,
             ]);
         });
     }

@@ -11,7 +11,7 @@ import { VEHICLE_CATALOG, BRANDS } from '../../data/vehicleCatalog'
 import { getServices } from '../../api/services'
 import { getInventory } from '../../api/inventory'
 import { getEmployees } from '../../api/employees'
-import { generateInvoice, getWhatsappLink, updateInvoice } from '../../api/invoices'
+import { generateInvoice, getWhatsappLink } from '../../api/invoices'
 import { getPayments, createPayment } from '../../api/payments'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Modal from '../../components/ui/Modal'
@@ -20,6 +20,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import { fmtDate, fmtDateTime, fmtMoney } from '../../utils/date'
 
 const STATUSES = ['recibido', 'diagnostico', 'en_progreso', 'listo', 'entregado', 'cancelado']
+const round2 = (n) => Math.round(n * 100) / 100
 
 export default function WorkOrderDetail() {
   const { id } = useParams()
@@ -41,6 +42,11 @@ export default function WorkOrderDetail() {
   const [confirmDel,    setConfirmDel]    = useState(null)
   // 'entregado' | 'cancelado' | null
   const [confirmStatus, setConfirmStatus] = useState(null)
+  const [invoicePreviewModal, setInvoicePreviewModal] = useState(false)
+  // datos { discount_percent, exempt_amount, taxed_18_amount } pendientes de confirmar, o null
+  const [confirmInvoice, setConfirmInvoice] = useState(null)
+  // { type: 'exempt'|'taxed18' } pendiente de confirmar al activarlo en la vista previa, o null
+  const [taxToggleConfirm, setTaxToggleConfirm] = useState(null)
 
   // Ref para cerrar el dropdown de estado al hacer click afuera
   const statusRef = useRef(null)
@@ -83,10 +89,12 @@ export default function WorkOrderDetail() {
   const { register: regEdit, handleSubmit: handleEdit } = useForm()
   const { register: regVeh, handleSubmit: handleVeh, reset: resetVeh, watch: watchVeh, setValue: setVehValue } = useForm()
   const { register: regPay, handleSubmit: handlePay, reset: resetPay } = useForm()
-  const { register: regInv, handleSubmit: handleInv } = useForm()
   const { register: regNote, handleSubmit: handleNote, reset: resetNote, watch: watchNote } = useForm()
   const { register: regESvc, handleSubmit: handleESvc, reset: resetESvc } = useForm()
   const { register: regEPart, handleSubmit: handleEPart, reset: resetEPart } = useForm()
+  const { register: regInvGen, handleSubmit: handleInvGen, reset: resetInvGen, watch: watchInvGen, setValue: setInvGenValue } = useForm({
+    defaultValues: { discount_percent: 0, exempt_checked: false, taxed_18_checked: false },
+  })
 
   const selectedSvcId = watchSvc('service_id')
   const selectedPartId = watchPart('inventory_id')
@@ -224,16 +232,6 @@ export default function WorkOrderDetail() {
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
 
-  const mutUpdateInvoice = useMutation({
-    mutationFn: (d) => updateInvoice(wo.invoice.id, d),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['work-order', id] })
-      qc.invalidateQueries({ queryKey: ['payments', wo.invoice.id] })
-      toast.success('Factura actualizada')
-    },
-    onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
-  })
-
   const mutLinkVehicle = useMutation({
     mutationFn: (d) => updateWorkOrder(id, d),
     onSuccess: () => {
@@ -267,8 +265,8 @@ export default function WorkOrderDetail() {
   })
 
   const mutGenInvoice = useMutation({
-    mutationFn: () => generateInvoice(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['work-order', id] }); toast.success('Factura generada') },
+    mutationFn: (data) => generateInvoice(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['work-order', id] }); toast.success('Factura generada'); setConfirmInvoice(null) },
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
 
@@ -309,6 +307,8 @@ export default function WorkOrderDetail() {
 
   if (isLoading) return <div className="flex items-center justify-center py-24 text-gray-400">Cargando...</div>
   if (!wo) return null
+
+  const locked = !!wo.invoice
 
   const onSvcSubmit = (d) => {
     const isManual = !d.service_id || d.service_id === 'manual'
@@ -386,7 +386,7 @@ export default function WorkOrderDetail() {
           </button>
 
           {!wo.invoice ? (
-            <button onClick={() => mutGenInvoice.mutate()} disabled={mutGenInvoice.isPending} className="btn-primary">
+            <button onClick={() => { resetInvGen({ discount_percent: 0, exempt_checked: false, taxed_18_checked: false }); setInvoicePreviewModal(true) }} disabled={mutGenInvoice.isPending} className="btn-primary">
               <FileText size={15} /> Generar factura
             </button>
           ) : (
@@ -422,11 +422,11 @@ export default function WorkOrderDetail() {
                 <Link to={`/vehicles/${wo.vehicle_id}`} className="btn-ghost p-1.5 text-primary-600" title="Ver vehículo">
                   <ExternalLink size={15} />
                 </Link>
-              ) : (
+              ) : !locked ? (
                 <button onClick={() => { resetVeh(); setBrandMode('list'); setModelMode('list'); setVehicleModal(true) }} className="btn-secondary text-xs py-1 px-2 flex items-center gap-1">
                   <Car size={13} /> Agregar vehículo
                 </button>
-              )}
+              ) : null}
             </div>
             <dl className="space-y-1 text-sm">
               <div><dt className="text-gray-500">Placa</dt><dd className="font-mono font-semibold">{wo.vehicle_plate ?? '—'}</dd></div>
@@ -462,31 +462,14 @@ export default function WorkOrderDetail() {
                 </div>
               </div>
 
-              {/* Descuento e impuesto */}
-              <form onSubmit={handleInv((d) => mutUpdateInvoice.mutate(d))} className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="label text-xs">Descuento %</label>
-                  <input {...regInv('discount_percent')} type="number" step="0.1" min="0" max="100" defaultValue={wo.invoice.discount_percent ?? 0} className="input text-sm" />
-                </div>
-                <div>
-                  <label className="label text-xs">Impuesto %</label>
-                  <input {...regInv('tax_percent')} type="number" step="0.1" min="0" max="100" defaultValue={wo.invoice.tax_percent ?? 0} className="input text-sm" />
-                </div>
-                <div className="col-span-2">
-                  <button type="submit" disabled={mutUpdateInvoice.isPending} className="btn-secondary text-xs w-full">
-                    {mutUpdateInvoice.isPending ? 'Aplicando...' : 'Aplicar descuento/impuesto'}
-                  </button>
-                </div>
-              </form>
-
               {/* Resumen de montos */}
               <div className="space-y-1 text-sm border-t border-gray-100 pt-2">
                 {wo.invoice.discount_amount > 0 && (
                   <div className="flex justify-between text-gray-500"><span>Descuento</span><span>- {fmtMoney(wo.invoice.discount_amount)}</span></div>
                 )}
-                {wo.invoice.tax_amount > 0 && (
-                  <div className="flex justify-between text-gray-500"><span>Impuesto</span><span>{fmtMoney(wo.invoice.tax_amount)}</span></div>
-                )}
+                <div className="flex justify-between text-gray-500"><span>Exonerado</span><span>{fmtMoney(wo.invoice.exempt_amount)}</span></div>
+                <div className="flex justify-between text-gray-500"><span>Gravado 15% <span className="text-xs text-gray-400">(ISV {fmtMoney(wo.invoice.tax_15_amount)})</span></span><span>{fmtMoney(wo.invoice.taxed_15_amount)}</span></div>
+                <div className="flex justify-between text-gray-500"><span>Gravado 18% <span className="text-xs text-gray-400">(ISV {fmtMoney(wo.invoice.tax_18_amount)})</span></span><span>{fmtMoney(wo.invoice.taxed_18_amount)}</span></div>
                 <div className="flex justify-between font-semibold text-primary-700"><span>Total factura</span><span>{fmtMoney(wo.invoice.total)}</span></div>
               </div>
 
@@ -525,38 +508,55 @@ export default function WorkOrderDetail() {
           {/* Diagnóstico */}
           <div className="card p-4">
             <h3 className="font-semibold text-gray-800 mb-3">Diagnóstico y trabajo</h3>
-            <form onSubmit={handleEdit((d) => mutUpdate.mutate(d))} className="space-y-3">
-              <div>
-                <label className="label">Problema reportado</label>
-                <textarea {...regEdit('problem')} defaultValue={wo.problem} rows={2} className="input" />
-              </div>
-              <div>
-                <label className="label">Revisión / diagnóstico</label>
-                <textarea {...regEdit('inspection')} defaultValue={wo.inspection} rows={2} className="input" />
-              </div>
-              <div>
-                <label className="label">Solución aplicada</label>
-                <textarea {...regEdit('solution')} defaultValue={wo.solution} rows={2} className="input" />
-              </div>
-              <div>
-                <label className="label">Comentarios</label>
-                <textarea {...regEdit('comments')} defaultValue={wo.comments} rows={2} className="input" />
-              </div>
-              <div className="flex justify-end">
-                <button type="submit" disabled={mutUpdate.isPending} className="btn-primary">
-                  {mutUpdate.isPending ? 'Guardando...' : 'Guardar notas'}
-                </button>
-              </div>
-            </form>
+            {locked && (
+              <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded mb-3">
+                Esta OT ya tiene factura generada y no se puede modificar.
+              </p>
+            )}
+            <fieldset disabled={locked} className="space-y-3 disabled:opacity-60">
+              <form onSubmit={handleEdit((d) => mutUpdate.mutate(d))} className="space-y-3">
+                <div>
+                  <label className="label">Problema reportado</label>
+                  <textarea {...regEdit('problem')} defaultValue={wo.problem} rows={2} className="input" />
+                </div>
+                <div>
+                  <label className="label">Revisión / diagnóstico</label>
+                  <textarea {...regEdit('inspection')} defaultValue={wo.inspection} rows={2} className="input" />
+                </div>
+                <div>
+                  <label className="label">Solución aplicada</label>
+                  <textarea {...regEdit('solution')} defaultValue={wo.solution} rows={2} className="input" />
+                </div>
+                <div>
+                  <label className="label">Pendientes</label>
+                  <textarea
+                    {...regEdit('comments')}
+                    defaultValue={wo.comments}
+                    rows={2}
+                    className="input"
+                    placeholder="Cosas que le quedaron pendientes al vehículo, para tomarlas en cuenta en una próxima orden"
+                  />
+                </div>
+                {!locked && (
+                  <div className="flex justify-end">
+                    <button type="submit" disabled={mutUpdate.isPending} className="btn-primary">
+                      {mutUpdate.isPending ? 'Guardando...' : 'Guardar notas'}
+                    </button>
+                  </div>
+                )}
+              </form>
+            </fieldset>
           </div>
 
           {/* Servicios */}
           <div className="card p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-800">Servicios / Mano de obra</h3>
-              <button onClick={() => { resetSvc({ employee_id: wo.employee_id ? String(wo.employee_id) : '' }); setSvcModal(true) }} className="btn-secondary text-xs py-1.5">
-                <Plus size={14} /> Agregar
-              </button>
+              {!locked && (
+                <button onClick={() => { resetSvc({ employee_id: wo.employee_id ? String(wo.employee_id) : '' }); setSvcModal(true) }} className="btn-secondary text-xs py-1.5">
+                  <Plus size={14} /> Agregar
+                </button>
+              )}
             </div>
             {wo.services?.length === 0 ? (
               <p className="text-sm text-gray-400 py-4 text-center">No hay servicios agregados</p>
@@ -571,23 +571,25 @@ export default function WorkOrderDetail() {
                       <td className="text-right">{fmtMoney(s.hourly_rate)}</td>
                       <td className="text-right font-medium">{fmtMoney(s.subtotal)}</td>
                       <td className="text-right py-1.5 pl-2">
-                        <div className="flex gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => { setEditingSvc(s); resetESvc({ service_name: s.service_name, employee_id: s.employee_id ? String(s.employee_id) : '', hours: s.hours, hourly_rate: s.hourly_rate }); setEditSvcModal(true) }}
-                            className="btn-ghost p-1 text-gray-400 hover:text-primary-600"
-                            title="Editar servicio"
-                          >
-                            <Edit2 size={13} />
-                          </button>
-                          <button
-                            onClick={() => setConfirmDel({ kind: 'svc', id: s.id, name: s.service_name })}
-                            disabled={mutRemoveSvc.isPending}
-                            className="btn-ghost p-1 text-gray-300 hover:text-red-500"
-                            title="Eliminar servicio"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
+                        {!locked && (
+                          <div className="flex gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => { setEditingSvc(s); resetESvc({ service_name: s.service_name, employee_id: s.employee_id ? String(s.employee_id) : '', hours: s.hours, hourly_rate: s.hourly_rate }); setEditSvcModal(true) }}
+                              className="btn-ghost p-1 text-gray-400 hover:text-primary-600"
+                              title="Editar servicio"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              onClick={() => setConfirmDel({ kind: 'svc', id: s.id, name: s.service_name })}
+                              disabled={mutRemoveSvc.isPending}
+                              className="btn-ghost p-1 text-gray-300 hover:text-red-500"
+                              title="Eliminar servicio"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -600,9 +602,11 @@ export default function WorkOrderDetail() {
           <div className="card p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-800">Repuestos utilizados</h3>
-              <button onClick={() => { resetPart(); setPartModal(true) }} className="btn-secondary text-xs py-1.5">
-                <Plus size={14} /> Agregar
-              </button>
+              {!locked && (
+                <button onClick={() => { resetPart(); setPartModal(true) }} className="btn-secondary text-xs py-1.5">
+                  <Plus size={14} /> Agregar
+                </button>
+              )}
             </div>
             {wo.parts?.length === 0 ? (
               <p className="text-sm text-gray-400 py-4 text-center">No hay repuestos agregados</p>
@@ -617,23 +621,25 @@ export default function WorkOrderDetail() {
                       <td className="text-right">{fmtMoney(p.unit_price)}</td>
                       <td className="text-right font-medium">{fmtMoney(p.subtotal)}</td>
                       <td className="text-right py-1.5 pl-2">
-                        <div className="flex gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => { setEditingPart(p); resetEPart({ part_name: p.part_name, part_sku: p.part_sku ?? '', quantity: p.quantity, unit_price: p.unit_price }); setEditPartModal(true) }}
-                            className="btn-ghost p-1 text-gray-400 hover:text-primary-600"
-                            title="Editar repuesto"
-                          >
-                            <Edit2 size={13} />
-                          </button>
-                          <button
-                            onClick={() => setConfirmDel({ kind: 'part', id: p.id, name: p.part_name, hasInventory: !!p.inventory_id })}
-                            disabled={mutRemovePart.isPending}
-                            className="btn-ghost p-1 text-gray-300 hover:text-red-500"
-                            title="Eliminar repuesto"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
+                        {!locked && (
+                          <div className="flex gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => { setEditingPart(p); resetEPart({ part_name: p.part_name, part_sku: p.part_sku ?? '', quantity: p.quantity, unit_price: p.unit_price }); setEditPartModal(true) }}
+                              className="btn-ghost p-1 text-gray-400 hover:text-primary-600"
+                              title="Editar repuesto"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              onClick={() => setConfirmDel({ kind: 'part', id: p.id, name: p.part_name, hasInventory: !!p.inventory_id })}
+                              disabled={mutRemovePart.isPending}
+                              className="btn-ghost p-1 text-gray-300 hover:text-red-500"
+                              title="Eliminar repuesto"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -992,6 +998,197 @@ export default function WorkOrderDetail() {
         confirmClass={confirmStatus === 'cancelado' ? 'btn-danger' : 'btn-primary'}
         loading={mutStatus.isPending}
         onConfirm={() => { mutStatus.mutate(confirmStatus); setConfirmStatus(null) }}
+      />
+
+      {/* Modal previa de factura (antes de confirmar) */}
+      <Modal open={invoicePreviewModal} onClose={() => setInvoicePreviewModal(false)} title="Vista previa de factura" size="lg">
+        <form
+          onSubmit={handleInvGen((d) => {
+            const subtotal = Number(wo.total ?? 0)
+            const discountPercent = Number(d.discount_percent || 0)
+            const afterDiscount = subtotal - round2(subtotal * discountPercent / 100)
+            setInvoicePreviewModal(false)
+            setConfirmInvoice({
+              discount_percent: discountPercent,
+              exempt_amount: d.exempt_checked ? afterDiscount : 0,
+              taxed_18_amount: d.taxed_18_checked ? afterDiscount : 0,
+            })
+          })}
+          className="space-y-4"
+        >
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm bg-gray-50 rounded-lg p-3">
+            <div className="flex justify-between"><dt className="text-gray-500">Cliente</dt><dd className="font-medium">{wo.customer_name ?? '—'}</dd></div>
+            <div className="flex justify-between"><dt className="text-gray-500">Teléfono</dt><dd className="font-medium">{wo.customer_phone ?? '—'}</dd></div>
+            <div className="flex justify-between"><dt className="text-gray-500">Vehículo</dt><dd className="font-medium">{`${wo.vehicle_brand ?? ''} ${wo.vehicle_model ?? ''}`.trim() || '—'}</dd></div>
+            <div className="flex justify-between"><dt className="text-gray-500">Placa</dt><dd className="font-mono font-medium">{wo.vehicle_plate ?? '—'}</dd></div>
+          </dl>
+
+          {/* Servicios */}
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Servicios / Mano de obra</h4>
+            {wo.services?.length ? (
+              <table className="w-full text-sm border border-gray-100 rounded-lg overflow-hidden">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left py-1.5 px-2 text-gray-500 font-medium">Servicio</th>
+                    <th className="text-right px-2 text-gray-500 font-medium">Horas</th>
+                    <th className="text-right px-2 text-gray-500 font-medium">Tarifa</th>
+                    <th className="text-right px-2 text-gray-500 font-medium">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wo.services.map((s) => (
+                    <tr key={s.id} className="border-t border-gray-100">
+                      <td className="py-1.5 px-2">{s.service_name}{s.employee?.name && <span className="text-xs text-gray-400"> — {s.employee.name}</span>}</td>
+                      <td className="text-right px-2">{s.hours}h</td>
+                      <td className="text-right px-2">{fmtMoney(s.hourly_rate)}</td>
+                      <td className="text-right px-2 font-medium">{fmtMoney(s.subtotal)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-gray-200 bg-gray-50">
+                    <td colSpan={3} className="text-right py-1.5 px-2 font-medium text-gray-500">Subtotal servicios</td>
+                    <td className="text-right px-2 font-semibold">{fmtMoney(wo.subtotal_services)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            ) : (
+              <p className="text-sm text-gray-400 py-2">Sin servicios</p>
+            )}
+          </div>
+
+          {/* Repuestos */}
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Repuestos utilizados</h4>
+            {wo.parts?.length ? (
+              <table className="w-full text-sm border border-gray-100 rounded-lg overflow-hidden">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left py-1.5 px-2 text-gray-500 font-medium">Repuesto</th>
+                    <th className="text-right px-2 text-gray-500 font-medium">Cant.</th>
+                    <th className="text-right px-2 text-gray-500 font-medium">P. Unit.</th>
+                    <th className="text-right px-2 text-gray-500 font-medium">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wo.parts.map((p) => (
+                    <tr key={p.id} className="border-t border-gray-100">
+                      <td className="py-1.5 px-2">{p.part_name}{p.part_sku && <span className="text-xs text-gray-400 font-mono"> [{p.part_sku}]</span>}</td>
+                      <td className="text-right px-2">{p.quantity}</td>
+                      <td className="text-right px-2">{fmtMoney(p.unit_price)}</td>
+                      <td className="text-right px-2 font-medium">{fmtMoney(p.subtotal)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-gray-200 bg-gray-50">
+                    <td colSpan={3} className="text-right py-1.5 px-2 font-medium text-gray-500">Subtotal repuestos</td>
+                    <td className="text-right px-2 font-semibold">{fmtMoney(wo.subtotal_parts)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            ) : (
+              <p className="text-sm text-gray-400 py-2">Sin repuestos</p>
+            )}
+          </div>
+
+          <div>
+            <label className="label">Descuento %</label>
+            <input {...regInvGen('discount_percent')} type="number" step="0.1" min="0" max="100" className="input max-w-[140px]" />
+          </div>
+
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-gray-300"
+                checked={!!watchInvGen('exempt_checked')}
+                onChange={(e) => {
+                  if (e.target.checked) setTaxToggleConfirm({ type: 'exempt' })
+                  else setInvGenValue('exempt_checked', false)
+                }}
+              />
+              Facturar como Exonerado (0%)
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-gray-300"
+                checked={!!watchInvGen('taxed_18_checked')}
+                onChange={(e) => {
+                  if (e.target.checked) setTaxToggleConfirm({ type: 'taxed18' })
+                  else setInvGenValue('taxed_18_checked', false)
+                }}
+              />
+              Facturar con ISV 18%
+            </label>
+          </div>
+
+          {(() => {
+            const subtotal = Number(wo.total ?? 0)
+            const discountPct = Number(watchInvGen('discount_percent') || 0)
+            const discountAmount = round2(subtotal * discountPct / 100)
+            const afterDiscount = subtotal - discountAmount
+            const exempt = watchInvGen('exempt_checked') ? afterDiscount : 0
+            const taxed18 = watchInvGen('taxed_18_checked') ? afterDiscount : 0
+            const taxed15 = Math.max(0, afterDiscount - exempt - taxed18)
+            const tax15 = round2(taxed15 * 15 / 100)
+            const tax18 = round2(taxed18 * 18 / 100)
+            const total = afterDiscount + tax15 + tax18
+            return (
+              <dl className="space-y-1 text-sm border-t border-gray-100 pt-3">
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-gray-500"><dt>Descuento</dt><dd>- {fmtMoney(discountAmount)}</dd></div>
+                )}
+                <div className="flex justify-between text-gray-500"><dt>Exonerado</dt><dd>{fmtMoney(exempt)}</dd></div>
+                <div className="flex justify-between text-gray-500"><dt>Gravado 15% <span className="text-xs text-gray-400">(ISV {fmtMoney(tax15)})</span></dt><dd>{fmtMoney(taxed15)}</dd></div>
+                <div className="flex justify-between text-gray-500"><dt>Gravado 18% <span className="text-xs text-gray-400">(ISV {fmtMoney(tax18)})</span></dt><dd>{fmtMoney(taxed18)}</dd></div>
+                <div className="flex justify-between font-bold text-base text-primary-700 border-t border-gray-200 pt-1.5 mt-1.5">
+                  <dt>Total a facturar</dt><dd>{fmtMoney(total)}</dd>
+                </div>
+              </dl>
+            )
+          })()}
+
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setInvoicePreviewModal(false)} className="btn-secondary">Cancelar</button>
+            <button type="submit" className="btn-primary">Continuar</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Confirmación de generación de factura */}
+      <ConfirmDialog
+        open={!!confirmInvoice}
+        onClose={() => setConfirmInvoice(null)}
+        title="Generar factura"
+        message="Una vez generada la factura, esta orden de trabajo ya no podrá modificarse (servicios, repuestos, diagnóstico, etc). ¿Deseas continuar?"
+        confirmText="Sí, generar factura"
+        loadingText="Generando..."
+        confirmClass="btn-primary"
+        loading={mutGenInvoice.isPending}
+        onConfirm={() => mutGenInvoice.mutate(confirmInvoice)}
+      />
+
+      {/* Confirmación al activar Exonerado / ISV 18% (queda registrado en la factura) */}
+      <ConfirmDialog
+        open={!!taxToggleConfirm}
+        onClose={() => setTaxToggleConfirm(null)}
+        title={taxToggleConfirm?.type === 'exempt' ? 'Marcar factura como Exonerado' : 'Facturar con ISV 18%'}
+        message={
+          taxToggleConfirm?.type === 'exempt'
+            ? 'Esta factura quedará registrada como Exonerada (0% de impuesto). ¿Confirmas?'
+            : 'Esta factura quedará registrada con ISV del 18% en vez del 15% estándar. ¿Confirmas?'
+        }
+        confirmText="Sí, confirmar"
+        confirmClass="btn-primary"
+        onConfirm={() => {
+          if (!taxToggleConfirm) return
+          setInvGenValue('exempt_checked', taxToggleConfirm.type === 'exempt')
+          setInvGenValue('taxed_18_checked', taxToggleConfirm.type === 'taxed18')
+          setTaxToggleConfirm(null)
+        }}
       />
 
       {/* Confirmación de eliminación (servicios y repuestos) */}

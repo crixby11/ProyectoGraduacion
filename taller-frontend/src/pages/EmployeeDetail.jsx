@@ -35,6 +35,11 @@ const schema = z.object({
   biweekly_salary:  z.coerce.number().min(0, 'Debe ser >= 0'),
   active:           z.boolean().optional(),
   notes:            z.string().optional(),
+  hired_at:         z.string().optional(),
+  terminated_at:    z.string().optional(),
+}).refine((d) => !d.terminated_at || !d.hired_at || d.terminated_at >= d.hired_at, {
+  message: 'No puede ser anterior a la fecha de contrato',
+  path: ['terminated_at'],
 })
 
 const bonusSchema = z.object({
@@ -249,6 +254,16 @@ export default function EmployeeDetail() {
                 <dt className="text-gray-500">Salario quincenal</dt>
                 <dd className="text-lg font-semibold text-primary-700">{fmtMoney(employee.biweekly_salary)}</dd>
               </div>
+              <div>
+                <dt className="text-gray-500 text-xs">Fecha de contrato</dt>
+                <dd className="font-medium">{employee.hired_at ? fmtDate(employee.hired_at) : '—'}</dd>
+              </div>
+              {employee.terminated_at && (
+                <div>
+                  <dt className="text-red-500 text-xs">Fecha de terminación</dt>
+                  <dd className="font-medium text-red-600">{fmtDate(employee.terminated_at)}</dd>
+                </div>
+              )}
               {employee.notes && (
                 <div className="pt-1 border-t border-gray-100">
                   <dt className="text-gray-500">Notas</dt>
@@ -674,6 +689,16 @@ export default function EmployeeDetail() {
               <label className="label">Salario quincenal (L) *</label>
               <input {...register('biweekly_salary')} type="number" step="0.01" className="input" placeholder="0.00" />
               {errors.biweekly_salary && <p className="mt-1 text-xs text-red-500">{errors.biweekly_salary.message}</p>}
+            </div>
+            <div>
+              <label className="label">Fecha de contrato</label>
+              <input {...register('hired_at')} type="date" className="input" />
+            </div>
+            <div>
+              <label className="label">Fecha de terminación</label>
+              <input {...register('terminated_at')} type="date" className="input" />
+              {errors.terminated_at && <p className="mt-1 text-xs text-red-500">{errors.terminated_at.message}</p>}
+              <p className="mt-1 text-xs text-gray-400">Dejar vacío mientras el empleado siga activo.</p>
             </div>
             <div className="sm:col-span-2 flex items-center gap-2">
               <input type="checkbox" {...register('active')} id="active-detail" className="w-4 h-4 text-primary-600" />

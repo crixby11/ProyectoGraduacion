@@ -12,7 +12,7 @@ class SupplierPurchase extends Model
     use HasFactory, LogsActivity;
 
     protected $fillable = [
-        'supplier_id', 'inventory_movement_id',
+        'supplier_id', 'inventory_movement_id', 'purchase_order_id',
         'total', 'amount_paid', 'balance', 'status', 'notes',
     ];
 
@@ -39,6 +39,11 @@ class SupplierPurchase extends Model
     public function inventoryMovement()
     {
         return $this->belongsTo(InventoryMovement::class);
+    }
+
+    public function purchaseOrder()
+    {
+        return $this->belongsTo(PurchaseOrder::class);
     }
 
     public function payments()

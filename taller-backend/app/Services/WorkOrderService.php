@@ -42,6 +42,8 @@ class WorkOrderService
 
     public function update(WorkOrder $workOrder, array $data): WorkOrder
     {
+        $this->assertEditable($workOrder);
+
         $workOrder->update($data);
 
         return $workOrder->fresh();
@@ -62,6 +64,8 @@ class WorkOrderService
 
     public function addService(WorkOrder $workOrder, array $data): WoService
     {
+        $this->assertEditable($workOrder);
+
         return DB::transaction(function () use ($workOrder, $data) {
             $data['subtotal'] = round($data['hours'] * $data['hourly_rate'], 2);
             $woService = $workOrder->services()->create($data);
@@ -73,6 +77,8 @@ class WorkOrderService
 
     public function updateService(WorkOrder $workOrder, int $woServiceId, array $data): WoService
     {
+        $this->assertEditable($workOrder);
+
         return DB::transaction(function () use ($workOrder, $woServiceId, $data) {
             $woService = $workOrder->services()->findOrFail($woServiceId);
             $data['subtotal'] = round($data['hours'] * $data['hourly_rate'], 2);
@@ -85,6 +91,8 @@ class WorkOrderService
 
     public function removeService(WorkOrder $workOrder, int $woServiceId): void
     {
+        $this->assertEditable($workOrder);
+
         DB::transaction(function () use ($workOrder, $woServiceId) {
             $workOrder->services()->findOrFail($woServiceId)->delete();
             $workOrder->recalculateTotals();
@@ -93,6 +101,8 @@ class WorkOrderService
 
     public function addPart(WorkOrder $workOrder, array $data, $user): WoPart
     {
+        $this->assertEditable($workOrder);
+
         return DB::transaction(function () use ($workOrder, $data, $user) {
             $data['subtotal'] = round($data['quantity'] * $data['unit_price'], 2);
 
@@ -132,6 +142,8 @@ class WorkOrderService
 
     public function updatePart(WorkOrder $workOrder, int $woPartId, array $data, $user): WoPart
     {
+        $this->assertEditable($workOrder);
+
         return DB::transaction(function () use ($workOrder, $woPartId, $data, $user) {
             $woPart = $workOrder->parts()->findOrFail($woPartId);
             $newQty = $data['quantity'];
@@ -173,6 +185,8 @@ class WorkOrderService
 
     public function removePart(WorkOrder $workOrder, int $woPartId): void
     {
+        $this->assertEditable($workOrder);
+
         DB::transaction(function () use ($workOrder, $woPartId) {
             $part = $workOrder->parts()->findOrFail($woPartId);
 
@@ -199,6 +213,21 @@ class WorkOrderService
             $part->delete();
             $workOrder->recalculateTotals();
         });
+    }
+
+    /**
+     * Una vez se genera la factura, la OT queda como registro fiscal fijo —
+     * ya no se pueden alterar sus servicios, repuestos ni datos, para que
+     * coincida siempre con lo facturado. El estado (recibido/en_progreso/
+     * entregado/etc.) sigue pudiendo avanzar normalmente.
+     */
+    private function assertEditable(WorkOrder $workOrder): void
+    {
+        abort_if(
+            $workOrder->invoice()->exists(),
+            422,
+            'No se puede modificar la orden de trabajo porque ya se generó su factura'
+        );
     }
 
     private function generateNumber(): string

@@ -48,7 +48,7 @@ class SupplierController extends Controller
     {
         $supplier->loadCount('inventory')->load([
             'inventory'  => fn ($q) => $q->select('id', 'name', 'sku', 'category', 'supplier_id', 'stock', 'min_stock', 'active')->orderBy('name'),
-            'purchases'  => fn ($q) => $q->with(['inventoryMovement.inventoryItem:id,name', 'payments.user:id,name'])->latest(),
+            'purchases'  => fn ($q) => $q->with(['inventoryMovement.inventoryItem:id,name', 'purchaseOrder:id,number', 'payments.user:id,name'])->latest(),
         ]);
 
         $supplier->setAttribute('total_paid', (float) $supplier->purchases->sum('amount_paid'));

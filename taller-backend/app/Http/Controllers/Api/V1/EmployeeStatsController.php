@@ -88,6 +88,7 @@ class EmployeeStatsController extends Controller
                 DB::raw("DATE_FORMAT(wo.received_at, '%Y-%m') as month"),
                 DB::raw("$nameSql as name"),
                 'e.id as employee_id',
+                DB::raw('COUNT(DISTINCT wo.id) as ot_count'),
                 DB::raw('COALESCE(SUM(ws.subtotal), 0) as revenue'),
                 DB::raw('COALESCE(SUM(ws.hours), 0) as hours')
             )

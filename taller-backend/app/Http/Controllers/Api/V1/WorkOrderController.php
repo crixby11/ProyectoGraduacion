@@ -64,6 +64,7 @@ class WorkOrderController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
+            'quote_id' => 'nullable|exists:quotes,id',
             'customer_id' => 'nullable|exists:customers,id',
             'vehicle_id' => 'nullable|exists:vehicles,id',
             'employee_id' => 'nullable|exists:employees,id',

@@ -41,6 +41,7 @@ function CustomTooltip({ active, payload, label, type }) {
           </span>
           <span className="font-semibold text-gray-800">
             {type === 'revenue' ? fmtMoney(p.value) : type === 'hours' ? fmtH(p.value) : p.value}
+            {type === 'ots' ? ' OT' : ''}
           </span>
         </div>
       ))}
@@ -92,7 +93,8 @@ export default function EmployeeStats() {
       const row = { month: fmtMonth(m) }
       employees.forEach(([eid, ename]) => {
         const entry = monthlyTrend.find((r) => r.month === m && r.employee_id === eid)
-        row[ename] = entry ? Number(chartMetric === 'revenue' ? entry.revenue : entry.hours) : 0
+        const value = chartMetric === 'revenue' ? entry?.revenue : chartMetric === 'hours' ? entry?.hours : entry?.ot_count
+        row[ename] = Number(value ?? 0)
       })
       return row
     })
@@ -152,7 +154,7 @@ export default function EmployeeStats() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ranking por ingresos */}
         <div className="card p-4">
           <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -194,6 +196,27 @@ export default function EmployeeStats() {
             </div>
           )}
         </div>
+
+        {/* Ranking por OTs trabajadas */}
+        <div className="card p-4">
+          <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <BarChart2 size={15} className="text-emerald-500" /> Ranking por OTs trabajadas
+          </h3>
+          {isLoading ? (
+            <p className="text-sm text-gray-400 py-8 text-center">Cargando...</p>
+          ) : !ranking.length ? (
+            <p className="text-sm text-gray-400 py-8 text-center">Sin datos para este período</p>
+          ) : (
+            <div className="space-y-2">
+              {[...ranking].sort((a, b) => b.ot_count - a.ot_count).map((e, i) => (
+                <RankCard
+                  key={e.id} rank={i + 1} employee={e}
+                  metric={e.ot_count} metricLabel="OTs" metricFmt={(n) => `${n}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Gráfica comparativa mensual */}
@@ -205,6 +228,7 @@ export default function EmployeeStats() {
               {[
                 { value: 'revenue', label: 'Ingresos' },
                 { value: 'hours',   label: 'Horas' },
+                { value: 'ots',     label: 'OTs' },
               ].map((opt) => (
                 <button
                   key={opt.value}
@@ -223,7 +247,7 @@ export default function EmployeeStats() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={55}
-                tickFormatter={(v) => chartMetric === 'revenue' ? `${(v/1000).toFixed(0)}k` : `${v}h`}
+                tickFormatter={(v) => chartMetric === 'revenue' ? `${(v/1000).toFixed(0)}k` : chartMetric === 'hours' ? `${v}h` : v}
               />
               <Tooltip content={<CustomTooltip type={chartMetric} />} />
               <Legend wrapperStyle={{ fontSize: 12 }} />

@@ -15,7 +15,11 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
-        $allowed = ['shop_name', 'shop_address', 'shop_phone', 'shop_email', 'shop_rtn', 'shop_city', 'invoice_notes'];
+        $allowed = [
+            'shop_name', 'shop_address', 'shop_phone', 'shop_email', 'shop_rtn', 'shop_city', 'invoice_notes',
+            'shop_owner', 'invoice_cai', 'invoice_range_start', 'invoice_range_end',
+            'invoice_deadline', 'invoice_next_correlativo',
+        ];
 
         $data = $request->validate([
             'shop_name'     => 'nullable|string|max:150',
@@ -25,6 +29,12 @@ class SettingController extends Controller
             'shop_rtn'      => 'nullable|string|max:30',
             'shop_city'     => 'nullable|string|max:80',
             'invoice_notes' => 'nullable|string|max:500',
+            'shop_owner'    => 'nullable|string|max:150',
+            'invoice_cai'   => 'nullable|string|max:60',
+            'invoice_range_start' => 'nullable|string|max:20',
+            'invoice_range_end'   => 'nullable|string|max:20',
+            'invoice_deadline'    => 'nullable|date',
+            'invoice_next_correlativo' => 'nullable|integer|min:1',
         ]);
 
         foreach ($data as $key => $value) {

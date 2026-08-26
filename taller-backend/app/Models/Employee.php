@@ -24,6 +24,7 @@ class Employee extends Model
     protected $fillable = [
         'first_name', 'second_name', 'last_name', 'second_last_name',
         'specialty', 'phone', 'email', 'biweekly_salary', 'active', 'notes',
+        'hired_at', 'terminated_at',
     ];
 
     protected $appends = ['name'];
@@ -31,6 +32,8 @@ class Employee extends Model
     protected $casts = [
         'biweekly_salary' => 'decimal:2',
         'active' => 'boolean',
+        'hired_at' => 'date',
+        'terminated_at' => 'date',
     ];
 
     public function getNameAttribute(): string

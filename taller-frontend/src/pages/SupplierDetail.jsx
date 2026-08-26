@@ -1,16 +1,15 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   ArrowLeft, Edit2, Package, Phone, Mail, MapPin, AlertTriangle,
-  Wallet, Clock, CheckCircle2, Banknote,
+  Wallet, Clock, CheckCircle2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getSupplier, updateSupplier } from '../api/suppliers'
-import { addSupplierPurchasePayment } from '../api/supplierPayments'
 import { fmtMoney, fmtDate } from '../utils/date'
 import Modal from '../components/ui/Modal'
 import { isValidPhone, fmtPhone } from '../utils/hn'
@@ -26,13 +25,6 @@ const schema = z.object({
   active: z.boolean().optional(),
 })
 
-const abonoSchema = z.object({
-  amount: z.coerce.number().min(0.01, 'Ingresa un monto'),
-  method: z.string().optional(),
-  payment_date: z.string().min(1, 'Requerido'),
-  reference: z.string().optional(),
-})
-
 const STATUS_CFG = {
   pagado:    { label: 'Pagado',    cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
   parcial:   { label: 'Parcial',   cls: 'bg-blue-50 text-blue-700 ring-blue-200' },
@@ -45,7 +37,6 @@ export default function SupplierDetail() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [editOpen, setEditOpen] = useState(false)
-  const [payingPurchase, setPayingPurchase] = useState(null)
 
   const { data: supplier, isLoading } = useQuery({
     queryKey: ['supplier', id],
@@ -53,9 +44,6 @@ export default function SupplierDetail() {
   })
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
-  const {
-    register: regPay, handleSubmit: handlePay, reset: resetPay, formState: { errors: payErrors },
-  } = useForm({ resolver: zodResolver(abonoSchema) })
 
   const save = useMutation({
     mutationFn: (d) => updateSupplier(id, d),
@@ -65,17 +53,6 @@ export default function SupplierDetail() {
       qc.invalidateQueries({ queryKey: ['suppliers-all'] })
       toast.success('Proveedor actualizado')
       setEditOpen(false)
-    },
-    onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
-  })
-
-  const addPayment = useMutation({
-    mutationFn: (d) => addSupplierPurchasePayment(payingPurchase.id, d),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['supplier', id] })
-      toast.success('Abono registrado')
-      setPayingPurchase(null)
-      resetPay()
     },
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
@@ -208,7 +185,7 @@ export default function SupplierDetail() {
         </div>
         {!supplier.purchases?.length ? (
           <p className="text-sm text-gray-400 py-4 text-center">
-            Sin compras registradas. Se registran opcionalmente al hacer una entrada de stock en Inventario.
+            Sin compras registradas. Se registran desde Órdenes de Compra.
           </p>
         ) : (
           <table className="w-full text-sm">
@@ -220,7 +197,6 @@ export default function SupplierDetail() {
                 <th className="text-right py-1.5">Pagado</th>
                 <th className="text-right py-1.5">Saldo</th>
                 <th className="text-right py-1.5">Estado</th>
-                <th className="py-1.5"></th>
               </tr>
             </thead>
             <tbody>
@@ -230,7 +206,11 @@ export default function SupplierDetail() {
                   <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2 text-gray-600 whitespace-nowrap">{fmtDate(p.created_at?.slice(0, 10))}</td>
                     <td className="py-2 text-gray-600">
-                      {p.inventory_movement?.inventory_item?.name
+                      {p.purchase_order?.number ? (
+                        <Link to={`/purchase-orders/${p.purchase_order.id}`} className="text-primary-600 hover:underline font-mono text-xs">
+                          {p.purchase_order.number}
+                        </Link>
+                      ) : p.inventory_movement?.inventory_item?.name
                         ? `${p.inventory_movement.inventory_item.name} (×${p.inventory_movement.quantity})`
                         : <span className="text-gray-300">—</span>}
                     </td>
@@ -240,64 +220,18 @@ export default function SupplierDetail() {
                     <td className="py-2 text-right">
                       <span className={`badge ring-1 ${cfg.cls}`}>{cfg.label}</span>
                     </td>
-                    <td className="py-2 text-right">
-                      {Number(p.balance) > 0 && (
-                        <button
-                          onClick={() => { setPayingPurchase(p); resetPay({ payment_date: new Date().toISOString().slice(0, 10), amount: p.balance }) }}
-                          className="btn-secondary text-xs py-1 px-2 whitespace-nowrap"
-                        >
-                          Abonar
-                        </button>
-                      )}
-                    </td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
         )}
+        {supplier.purchases?.length > 0 && (
+          <p className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
+            Para registrar abonos o ver el detalle de pagos, entra a la Orden de Compra correspondiente.
+          </p>
+        )}
       </div>
-
-      {/* Modal registrar abono */}
-      <Modal open={!!payingPurchase} onClose={() => setPayingPurchase(null)} title="Registrar abono">
-        <form onSubmit={handlePay((d) => addPayment.mutate(d))} className="space-y-4">
-          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-            <Banknote size={16} className="shrink-0" />
-            Saldo pendiente: <strong>{fmtMoney(payingPurchase?.balance)}</strong> de {fmtMoney(payingPurchase?.total)}
-          </div>
-          <div>
-            <label className="label">Monto a abonar (L) *</label>
-            <input {...regPay('amount')} type="number" step="0.01" className="input" />
-            {payErrors.amount && <p className="mt-1 text-xs text-red-500">{payErrors.amount.message}</p>}
-          </div>
-          <div>
-            <label className="label">Método</label>
-            <select {...regPay('method')} className="input">
-              <option value="">— Sin especificar —</option>
-              <option value="efectivo">Efectivo</option>
-              <option value="transferencia">Transferencia</option>
-              <option value="tarjeta">Tarjeta</option>
-              <option value="cheque">Cheque</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">Fecha de pago</label>
-            <input {...regPay('payment_date')} type="date" className="input" />
-            {payErrors.payment_date && <p className="mt-1 text-xs text-red-500">{payErrors.payment_date.message}</p>}
-          </div>
-          <div>
-            <label className="label">Referencia</label>
-            <input {...regPay('reference')} className="input" placeholder="N° factura, voucher..." />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setPayingPurchase(null)} className="btn-secondary">Cancelar</button>
-            <button type="submit" disabled={addPayment.isPending} className="btn-primary">
-              {addPayment.isPending ? 'Guardando...' : 'Confirmar abono'}
-            </button>
-          </div>
-        </form>
-      </Modal>
 
       {/* Modal editar */}
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Editar proveedor" size="lg">

@@ -10,7 +10,7 @@ class InventoryMovement extends Model
     use HasFactory;
 
     protected $fillable = [
-        'inventory_id', 'work_order_id', 'user_id',
+        'inventory_id', 'work_order_id', 'purchase_order_id', 'user_id',
         'type', 'quantity', 'stock_before', 'stock_after',
         'unit_cost', 'reason', 'notes',
     ];
@@ -27,6 +27,11 @@ class InventoryMovement extends Model
     public function workOrder()
     {
         return $this->belongsTo(WorkOrder::class);
+    }
+
+    public function purchaseOrder()
+    {
+        return $this->belongsTo(PurchaseOrder::class);
     }
 
     public function user()

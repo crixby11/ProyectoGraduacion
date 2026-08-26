@@ -16,6 +16,13 @@ const STATUS_CONFIG = {
   confirmada:  { label: 'Confirmada',   dot: 'bg-green-500',  pill: 'bg-green-50  text-green-700  ring-green-200' },
   completada:  { label: 'Completada',   dot: 'bg-gray-400',   pill: 'bg-gray-100  text-gray-600   ring-gray-200' },
   no_presente: { label: 'No presente',  dot: 'bg-orange-500', pill: 'bg-orange-50 text-orange-700 ring-orange-200' },
+  // Cotizaciones
+  aprobada:    { label: 'Aprobada',     dot: 'bg-green-500',  pill: 'bg-green-50  text-green-700  ring-green-200' },
+  rechazada:   { label: 'Rechazada',    dot: 'bg-red-500',    pill: 'bg-red-50    text-red-700    ring-red-200' },
+  convertida:  { label: 'Convertida',   dot: 'bg-blue-500',   pill: 'bg-blue-50   text-blue-700   ring-blue-200' },
+  // Órdenes de compra
+  recibida:    { label: 'Recibida',     dot: 'bg-green-500',  pill: 'bg-green-50  text-green-700  ring-green-200' },
+  cancelada:   { label: 'Cancelada',    dot: 'bg-red-500',    pill: 'bg-red-50    text-red-700    ring-red-200' },
 }
 
 export default function StatusBadge({ status }) {

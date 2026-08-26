@@ -62,26 +62,27 @@ class InvoiceController extends Controller
         return response()->json($invoice->load(['workOrder.services', 'workOrder.parts', 'customer', 'payments']));
     }
 
-    public function generate(WorkOrder $workOrder)
+    public function generate(Request $request, WorkOrder $workOrder)
     {
-        $invoice = $this->invoiceService->generateFromWorkOrder($workOrder);
-
-        return response()->json($invoice->load(['workOrder', 'customer', 'payments']), 201);
-    }
-
-    public function update(Request $request, Invoice $invoice)
-    {
-        $data = $request->validate([
+        $overrides = $request->validate([
             'discount_percent' => 'nullable|numeric|min:0|max:100',
-            'tax_percent' => 'nullable|numeric|min:0|max:100',
-            'notes' => 'nullable|string',
-            'status' => 'nullable|in:pendiente,pagada,parcial,anulada',
+            'exempt_amount' => 'nullable|numeric|min:0',
+            'taxed_18_amount' => 'nullable|numeric|min:0',
         ]);
 
-        $invoice->update($data);
-        $invoice->recalculate();
+        $discountPercent = $overrides['discount_percent'] ?? 0;
+        $subtotalAfterDiscount = $workOrder->total - round($workOrder->total * $discountPercent / 100, 2);
+        $exempt = $overrides['exempt_amount'] ?? 0;
+        $taxed18 = $overrides['taxed_18_amount'] ?? 0;
+        abort_if(
+            $exempt + $taxed18 > $subtotalAfterDiscount,
+            422,
+            'La suma de exonerado y gravado 18% no puede superar el subtotal de la factura'
+        );
 
-        return response()->json($invoice->fresh(['workOrder', 'customer', 'payments']));
+        $invoice = $this->invoiceService->generateFromWorkOrder($workOrder, $overrides);
+
+        return response()->json($invoice->load(['workOrder', 'customer', 'payments']), 201);
     }
 
     public function pdf(Invoice $invoice)

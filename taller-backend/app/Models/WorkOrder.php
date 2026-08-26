@@ -22,7 +22,7 @@ class WorkOrder extends Model
     }
 
     protected $fillable = [
-        'number', 'customer_id', 'vehicle_id', 'employee_id',
+        'number', 'quote_id', 'customer_id', 'vehicle_id', 'employee_id',
         'customer_name', 'customer_phone',
         'vehicle_plate', 'vehicle_brand', 'vehicle_model', 'vehicle_year',
         'vehicle_color', 'vehicle_engine', 'vehicle_vin', 'vehicle_displacement',
@@ -90,6 +90,11 @@ class WorkOrder extends Model
     public function notes()
     {
         return $this->hasMany(WorkOrderNote::class);
+    }
+
+    public function quote()
+    {
+        return $this->belongsTo(Quote::class);
     }
 
     public function recalculateTotals(): void

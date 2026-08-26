@@ -13,6 +13,10 @@ use App\Http\Controllers\Api\V1\GeneralFileController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PurchaseOrderController;
+use App\Http\Controllers\Api\V1\PurchaseOrderFileController;
+use App\Http\Controllers\Api\V1\QuoteController;
+use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\VehicleController;
 use App\Http\Controllers\Api\V1\SettingController;
@@ -37,6 +41,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index']);
 
+    // Reportes
+    Route::get('reports/performance', [ReportController::class, 'performance']);
+
     // Clientes
     Route::apiResource('customers', CustomerController::class);
 
@@ -57,9 +64,30 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Catálogo de servicios
     Route::apiResource('services', ServiceController::class);
 
+    // Cotizaciones
+    Route::apiResource('quotes', QuoteController::class);
+    Route::post('quotes/{quote}/services', [QuoteController::class, 'addService']);
+    Route::put('quotes/{quote}/services/{quoteServiceId}', [QuoteController::class, 'updateService']);
+    Route::delete('quotes/{quote}/services/{quoteServiceId}', [QuoteController::class, 'removeService']);
+    Route::post('quotes/{quote}/parts', [QuoteController::class, 'addPart']);
+    Route::put('quotes/{quote}/parts/{quotePartId}', [QuoteController::class, 'updatePart']);
+    Route::delete('quotes/{quote}/parts/{quotePartId}', [QuoteController::class, 'removePart']);
+    Route::patch('quotes/{quote}/status', [QuoteController::class, 'changeStatus']);
+    Route::get('quotes/{quote}/pdf', [QuoteController::class, 'pdf']);
+    Route::get('quotes/{quote}/whatsapp', [QuoteController::class, 'whatsappLink']);
+
     // Proveedores
     Route::apiResource('suppliers', SupplierController::class);
     Route::post('supplier-purchases/{supplierPurchase}/payments', [SupplierPaymentController::class, 'store']);
+
+    // Órdenes de compra — inmutables una vez creadas, solo cambian de estado (recibir/cancelar)
+    Route::apiResource('purchase-orders', PurchaseOrderController::class)->except(['update']);
+    Route::post('purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive']);
+    Route::patch('purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
+    Route::get('purchase-orders/{purchaseOrder}/files', [PurchaseOrderFileController::class, 'index']);
+    Route::post('purchase-orders/{purchaseOrder}/files', [PurchaseOrderFileController::class, 'store']);
+    Route::get('purchase-orders/{purchaseOrder}/files/{file}/download', [PurchaseOrderFileController::class, 'download']);
+    Route::delete('purchase-orders/{purchaseOrder}/files/{file}', [PurchaseOrderFileController::class, 'destroy']);
 
     // Inventario
     Route::get('inventory/low-stock', [InventoryController::class, 'lowStock']);
@@ -85,7 +113,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('invoices', [InvoiceController::class, 'index']);
     Route::get('invoices/{invoice}', [InvoiceController::class, 'show']);
     Route::post('invoices/generate/{workOrder}', [InvoiceController::class, 'generate']);
-    Route::patch('invoices/{invoice}', [InvoiceController::class, 'update']);
     Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf']);
     Route::get('invoices/{invoice}/whatsapp', [InvoiceController::class, 'whatsappLink']);
 
