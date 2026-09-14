@@ -53,6 +53,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Empleados — rutas estáticas ANTES del apiResource para evitar conflicto con {employee}
     Route::get('employees/stats', [EmployeeStatsController::class, 'index']);
     Route::apiResource('employees', EmployeeController::class);
+    Route::post('employees/{employee}/weekly-reminder', [EmployeeController::class, 'sendWeeklyReminder']);
     Route::post('employees/{employee}/bonuses', [EmployeeBonusController::class, 'store']);
     Route::put('employees/{employee}/bonuses/{bonus}', [EmployeeBonusController::class, 'update']);
     Route::get('employees/{employee}/stats', [EmployeeStatsController::class, 'show']);

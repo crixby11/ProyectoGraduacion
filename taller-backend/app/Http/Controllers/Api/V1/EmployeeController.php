@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
 {
+    public function __construct(private WhatsAppService $whatsApp) {}
+
     public function index(Request $request)
     {
         $query = Employee::query();
@@ -93,5 +96,12 @@ class EmployeeController extends Controller
         $employee->delete();
 
         return response()->json(['message' => 'Empleado eliminado']);
+    }
+
+    public function sendWeeklyReminder(Employee $employee)
+    {
+        $link = $this->whatsApp->employeeWeeklyOtsLink($employee);
+
+        return response()->json(['url' => $link]);
     }
 }

@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   ArrowLeft, Edit2, ClipboardList, Phone, Mail, Wrench, Plus, Gift,
-  Paperclip, Trash2, Download, BarChart2,
+  Paperclip, Trash2, Download, BarChart2, MessageCircle,
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -18,6 +18,7 @@ import toast from 'react-hot-toast'
 import {
   getEmployee, updateEmployee, createEmployeeBonus, updateEmployeeBonus,
   getEmployeeFiles, uploadEmployeeFile, deleteEmployeeFile, getEmployeeStat,
+  sendEmployeeWeeklyReminder,
 } from '../api/employees'
 import Modal from '../components/ui/Modal'
 import StatusBadge from '../components/ui/StatusBadge'
@@ -110,6 +111,12 @@ export default function EmployeeDetail() {
     queryKey: ['employee-stat', id, statMonths],
     queryFn: () => getEmployeeStat(id, { months: statMonths }).then((r) => r.data),
     enabled: !!id,
+  })
+
+  const mutReminder = useMutation({
+    mutationFn: () => sendEmployeeWeeklyReminder(id),
+    onSuccess: (res) => { window.open(res.data.url, '_blank'); toast.success('Abriendo WhatsApp...') },
+    onError: (e) => toast.error(e.response?.data?.message ?? 'No se pudo generar el enlace'),
   })
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
@@ -211,6 +218,9 @@ export default function EmployeeDetail() {
           </div>
           <p className="text-sm text-gray-500">{employee.specialty ?? 'Sin especialidad asignada'}</p>
         </div>
+        <button onClick={() => mutReminder.mutate()} disabled={mutReminder.isPending} className="btn-secondary">
+          <MessageCircle size={15} /> Recordatorio semanal
+        </button>
         <button onClick={() => { reset({ ...employee, active: employee.active }); setEditOpen(true) }} className="btn-secondary">
           <Edit2 size={15} /> Editar
         </button>

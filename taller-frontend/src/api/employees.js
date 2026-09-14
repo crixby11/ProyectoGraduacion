@@ -5,6 +5,7 @@ export const getEmployee = (id) => api.get(`/employees/${id}`)
 export const createEmployee = (data) => api.post('/employees', data)
 export const updateEmployee = (id, data) => api.put(`/employees/${id}`, data)
 export const createEmployeeBonus = (employeeId, data) => api.post(`/employees/${employeeId}/bonuses`, data)
+export const sendEmployeeWeeklyReminder = (employeeId) => api.post(`/employees/${employeeId}/weekly-reminder`)
 export const updateEmployeeBonus = (employeeId, bonusId, data) => api.put(`/employees/${employeeId}/bonuses/${bonusId}`, data)
 
 // Estadísticas
