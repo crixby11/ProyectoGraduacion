@@ -104,6 +104,7 @@ export default function WorkOrderDetail() {
     if (!selectedSvcId || selectedSvcId === 'manual') return
     const svc = servicesCat?.find((s) => String(s.id) === String(selectedSvcId))
     if (svc?.estimated_hours) setSvcValue('hours', svc.estimated_hours)
+    if (svc?.base_price) setSvcValue('hourly_rate', svc.base_price)
   }, [selectedSvcId, servicesCat])
 
   // Auto-relleno precio al seleccionar repuesto del inventario
@@ -565,13 +566,12 @@ export default function WorkOrderDetail() {
               <p className="text-sm text-gray-400 py-4 text-center">No hay servicios agregados</p>
             ) : (
               <table className="w-full text-sm">
-                <thead><tr className="border-b border-gray-100"><th className="text-left py-1.5 text-gray-500 font-medium">Servicio</th><th className="text-right text-gray-500 font-medium">Horas</th><th className="text-right text-gray-500 font-medium">Tarifa</th><th className="text-right text-gray-500 font-medium">Subtotal</th><th className="w-16"></th></tr></thead>
+                <thead><tr className="border-b border-gray-100"><th className="text-left py-1.5 text-gray-500 font-medium">Servicio</th><th className="text-right text-gray-500 font-medium">Horas</th><th className="text-right text-gray-500 font-medium">Precio</th><th className="w-16"></th></tr></thead>
                 <tbody>
                   {wo.services.map((s) => (
                     <tr key={s.id} className="border-b border-gray-50 group">
                       <td className="py-1.5">{s.service_name}<br /><span className="text-xs text-gray-400">{s.employee?.name}</span></td>
                       <td className="text-right">{s.hours}h</td>
-                      <td className="text-right">{fmtMoney(s.hourly_rate)}</td>
                       <td className="text-right font-medium">{fmtMoney(s.subtotal)}</td>
                       <td className="text-right py-1.5 pl-2">
                         {!locked && (
@@ -746,7 +746,7 @@ export default function WorkOrderDetail() {
               <input {...regSvc('hours')} type="number" step="0.5" min="0.5" className="input" defaultValue={1} required />
             </div>
             <div>
-              <label className="label">Tarifa/hora (L) *</label>
+              <label className="label">Precio (L) *</label>
               <input {...regSvc('hourly_rate')} type="number" step="1" min="0" className="input" defaultValue={0} required />
             </div>
           </div>
@@ -815,7 +815,7 @@ export default function WorkOrderDetail() {
               <input {...regESvc('hours')} type="number" step="0.5" min="0" className="input" required />
             </div>
             <div>
-              <label className="label">Tarifa/hora (L) *</label>
+              <label className="label">Precio (L) *</label>
               <input {...regESvc('hourly_rate')} type="number" step="1" min="0" className="input" required />
             </div>
           </div>
@@ -1035,8 +1035,7 @@ export default function WorkOrderDetail() {
                   <tr>
                     <th className="text-left py-1.5 px-2 text-gray-500 font-medium">Servicio</th>
                     <th className="text-right px-2 text-gray-500 font-medium">Horas</th>
-                    <th className="text-right px-2 text-gray-500 font-medium">Tarifa</th>
-                    <th className="text-right px-2 text-gray-500 font-medium">Subtotal</th>
+                    <th className="text-right px-2 text-gray-500 font-medium">Precio</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1044,14 +1043,13 @@ export default function WorkOrderDetail() {
                     <tr key={s.id} className="border-t border-gray-100">
                       <td className="py-1.5 px-2">{s.service_name}{s.employee?.name && <span className="text-xs text-gray-400"> — {s.employee.name}</span>}</td>
                       <td className="text-right px-2">{s.hours}h</td>
-                      <td className="text-right px-2">{fmtMoney(s.hourly_rate)}</td>
                       <td className="text-right px-2 font-medium">{fmtMoney(s.subtotal)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-gray-200 bg-gray-50">
-                    <td colSpan={3} className="text-right py-1.5 px-2 font-medium text-gray-500">Subtotal servicios</td>
+                    <td colSpan={2} className="text-right py-1.5 px-2 font-medium text-gray-500">Subtotal servicios</td>
                     <td className="text-right px-2 font-semibold">{fmtMoney(wo.subtotal_services)}</td>
                   </tr>
                 </tfoot>

@@ -81,7 +81,10 @@ class QuoteService
         return DB::transaction(function () use ($quote, $data) {
             $this->assertEditable($quote);
 
-            $data['subtotal'] = round($data['hours'] * $data['hourly_rate'], 2);
+            // 'hourly_rate' es el precio total del servicio, no un valor por
+            // hora — 'hours' queda como dato informativo, no participa en el
+            // cálculo del subtotal (igual que en WorkOrderService).
+            $data['subtotal'] = round($data['hourly_rate'], 2);
             $line = $quote->services()->create($data);
             $quote->recalculateTotals();
 
@@ -95,7 +98,7 @@ class QuoteService
             $this->assertEditable($quote);
 
             $line = $quote->services()->findOrFail($quoteServiceId);
-            $data['subtotal'] = round($data['hours'] * $data['hourly_rate'], 2);
+            $data['subtotal'] = round($data['hourly_rate'], 2);
             $line->update($data);
             $quote->recalculateTotals();
 

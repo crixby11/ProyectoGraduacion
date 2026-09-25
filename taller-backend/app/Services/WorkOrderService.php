@@ -68,7 +68,10 @@ class WorkOrderService
         $this->assertEditable($workOrder);
 
         return DB::transaction(function () use ($workOrder, $data) {
-            $data['subtotal'] = round($data['hours'] * $data['hourly_rate'], 2);
+            // 'hourly_rate' es el precio total del servicio, no un valor por
+            // hora — 'hours' queda como dato informativo (seguimiento de
+            // tiempo del técnico), no participa en el cálculo del subtotal.
+            $data['subtotal'] = round($data['hourly_rate'], 2);
             $woService = $workOrder->services()->create($data);
             $workOrder->recalculateTotals();
 
@@ -82,7 +85,7 @@ class WorkOrderService
 
         return DB::transaction(function () use ($workOrder, $woServiceId, $data) {
             $woService = $workOrder->services()->findOrFail($woServiceId);
-            $data['subtotal'] = round($data['hours'] * $data['hourly_rate'], 2);
+            $data['subtotal'] = round($data['hourly_rate'], 2);
             $woService->update($data);
             $workOrder->recalculateTotals();
 
