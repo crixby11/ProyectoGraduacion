@@ -7,9 +7,6 @@ import {
   TrendingUp, AlertTriangle, Truck, Plus,
   CalendarDays, ArrowRight, Clock,
 } from 'lucide-react'
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from 'recharts'
 import { fmtDate, fmtTime } from '../utils/date'
 import StatusBadge from '../components/ui/StatusBadge'
 
@@ -119,10 +116,6 @@ export default function Dashboard() {
   const d = data ?? {}
   const statuses   = ['recibido', 'diagnostico', 'en_progreso', 'listo']
   const totalOpen  = statuses.reduce((s, k) => s + (parseInt(d.ots_by_status?.[k]) || 0), 0)
-  const chartData  = (d.revenue_chart ?? []).map((r) => ({
-    date:  r.date?.slice(5),
-    total: Number(r.total),
-  }))
 
   const firstName    = user?.name ? user.name.trim().split(/\s+/)[0] : null
   const hasOverdue   = (d.overdue_work_orders?.length  ?? 0) > 0
@@ -296,139 +289,75 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Gráfica + Panel de análisis ─────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ── Estado de OTs + Técnico del mes + Stock bajo ─────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
 
-        {/* Área chart */}
-        <div className="card p-5 lg:col-span-2">
-          <div className="mb-5">
-            <h2 className="text-base font-semibold text-gray-800">Ingresos</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Últimos 30 días</p>
+        {/* Estado OTs */}
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-800">Estado de OTs</h2>
+            {totalOpen > 0 && (
+              <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
+                {totalOpen} total
+              </span>
+            )}
           </div>
-
-          {chartData.length === 0 ? (
-            <div className="h-52 flex flex-col items-center justify-center gap-2 text-gray-200">
-              <TrendingUp size={36} strokeWidth={1} />
-              <span className="text-sm text-gray-400">Sin datos de ingresos aún</span>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.18} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: '#9ca3af' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: '#9ca3af' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                  width={38}
-                />
-                <Tooltip
-                  formatter={(v) => [fmt(v), 'Total']}
-                  labelStyle={{ fontSize: 12, color: '#374151' }}
-                  contentStyle={{
-                    borderRadius: 10,
-                    border: '1px solid #e5e7eb',
-                    boxShadow: '0 4px 16px rgba(0,0,0,.07)',
-                    fontSize: 12,
-                  }}
-                  cursor={{ stroke: '#e5e7eb', strokeWidth: 1 }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="total"
-                  stroke="#6366f1"
-                  strokeWidth={2.5}
-                  fill="url(#gradRevenue)"
-                  dot={false}
-                  activeDot={{ r: 4, fill: '#6366f1', strokeWidth: 0 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
+          <div className="space-y-3.5">
+            {statuses.map((s) => (
+              <OtStatusRow
+                key={s}
+                status={s}
+                count={d.ots_by_status?.[s] ?? 0}
+                total={totalOpen}
+              />
+            ))}
+          </div>
+          <Link
+            to="/work-orders"
+            className="mt-4 flex items-center justify-center gap-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors py-1"
+          >
+            Ver todas las OTs <ArrowRight size={12} />
+          </Link>
         </div>
 
-        {/* Panel derecho */}
-        <div className="space-y-4">
-
-          {/* Estado OTs */}
-          <div className="card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-800">Estado de OTs</h2>
-              {totalOpen > 0 && (
-                <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
-                  {totalOpen} total
-                </span>
-              )}
+        {/* Técnico del mes */}
+        {d.top_employee && (
+          <div className="card p-4 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 border-amber-100">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="p-1.5 rounded-lg bg-amber-100">
+                <Trophy size={14} className="text-amber-600" />
+              </div>
+              <span className="text-[11px] font-bold text-amber-700 uppercase tracking-widest">
+                Técnico del mes
+              </span>
             </div>
-            <div className="space-y-3.5">
-              {statuses.map((s) => (
-                <OtStatusRow
-                  key={s}
-                  status={s}
-                  count={d.ots_by_status?.[s] ?? 0}
-                  total={totalOpen}
-                />
-              ))}
+            <p className="font-semibold text-gray-900 text-[15px] mt-2 leading-tight">
+              {d.top_employee.name}
+            </p>
+            <div className="mt-1.5 flex items-center gap-3 text-xs text-gray-500">
+              <span>{Number(d.top_employee.total_hours).toFixed(1)} hrs</span>
+              <span className="text-gray-200">·</span>
+              <span className="text-emerald-600 font-semibold">{fmt(d.top_employee.total_revenue)}</span>
             </div>
-            <Link
-              to="/work-orders"
-              className="mt-4 flex items-center justify-center gap-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors py-1"
-            >
-              Ver todas las OTs <ArrowRight size={12} />
-            </Link>
           </div>
+        )}
 
-          {/* Técnico del mes */}
-          {d.top_employee && (
-            <div className="card p-4 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 border-amber-100">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="p-1.5 rounded-lg bg-amber-100">
-                  <Trophy size={14} className="text-amber-600" />
-                </div>
-                <span className="text-[11px] font-bold text-amber-700 uppercase tracking-widest">
-                  Técnico del mes
-                </span>
-              </div>
-              <p className="font-semibold text-gray-900 text-[15px] mt-2 leading-tight">
-                {d.top_employee.name}
-              </p>
-              <div className="mt-1.5 flex items-center gap-3 text-xs text-gray-500">
-                <span>{Number(d.top_employee.total_hours).toFixed(1)} hrs</span>
-                <span className="text-gray-200">·</span>
-                <span className="text-emerald-600 font-semibold">{fmt(d.top_employee.total_revenue)}</span>
-              </div>
+        {/* Alerta stock bajo */}
+        {(d.low_stock_count ?? 0) > 0 && (
+          <Link
+            to="/inventory?low_stock=1"
+            className="card p-4 flex items-center gap-3 border-l-4 border-amber-400 hover:bg-amber-50 transition-colors group"
+          >
+            <div className="p-2 rounded-xl bg-amber-50 group-hover:bg-amber-100 transition-colors shrink-0">
+              <Package size={16} className="text-amber-600" />
             </div>
-          )}
-
-          {/* Alerta stock bajo */}
-          {(d.low_stock_count ?? 0) > 0 && (
-            <Link
-              to="/inventory?low_stock=1"
-              className="card p-4 flex items-center gap-3 border-l-4 border-amber-400 hover:bg-amber-50 transition-colors group"
-            >
-              <div className="p-2 rounded-xl bg-amber-50 group-hover:bg-amber-100 transition-colors shrink-0">
-                <Package size={16} className="text-amber-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800">Stock bajo</p>
-                <p className="text-xs text-gray-500">{d.low_stock_count} repuesto(s) por reponer</p>
-              </div>
-              <ArrowRight size={14} className="text-gray-300 group-hover:text-amber-500 transition-colors shrink-0" />
-            </Link>
-          )}
-        </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-800">Stock bajo</p>
+              <p className="text-xs text-gray-500">{d.low_stock_count} repuesto(s) por reponer</p>
+            </div>
+            <ArrowRight size={14} className="text-gray-300 group-hover:text-amber-500 transition-colors shrink-0" />
+          </Link>
+        )}
       </div>
     </div>
   )

@@ -46,29 +46,31 @@ const navGroups = [
 ]
 
 /* ── Item de navegación individual ────────────────────────── */
-function NavItem({ to, icon: Icon, label, end, onClose }) {
+function NavItem({ to, icon: Icon, label, end, onClose, collapsed }) {
   return (
-    <NavLink to={to} end={end} onClick={onClose} className="block mb-0.5">
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onClose}
+      className="block mb-0.5"
+      title={collapsed ? label : undefined}
+    >
       {({ isActive }) => (
         <span
           className={`
             flex items-center gap-3 px-3 py-[0.45rem] rounded-xl text-sm font-medium
             transition-all duration-150 cursor-pointer
+            ${collapsed ? 'lg:justify-center lg:gap-0 lg:px-0' : ''}
             ${isActive
-              ? 'bg-white/[0.13] text-white'
-              : 'text-white/50 hover:bg-white/[0.07] hover:text-white/85'
+              ? 'bg-gray-100 text-gray-900 font-semibold'
+              : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
             }
           `}
         >
-          <span
-            className={`
-              flex items-center justify-center w-7 h-7 rounded-lg shrink-0 transition-colors
-              ${isActive ? 'bg-white/[0.18]' : ''}
-            `}
-          >
+          <span className="flex items-center justify-center w-7 h-7 shrink-0">
             <Icon size={15} />
           </span>
-          {label}
+          <span className={collapsed ? 'lg:hidden' : ''}>{label}</span>
         </span>
       )}
     </NavLink>
@@ -76,7 +78,9 @@ function NavItem({ to, icon: Icon, label, end, onClose }) {
 }
 
 /* ── Sidebar ───────────────────────────────────────────────── */
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, onClose, desktopOpen = true }) {
+  const collapsed = !desktopOpen
+
   return (
     <>
       {/* Overlay móvil */}
@@ -86,46 +90,47 @@ export default function Sidebar({ open, onClose }) {
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-30 w-64 flex flex-col
-          bg-[#0f1e3d]
-          transform transition-transform duration-200
-          lg:relative lg:translate-x-0
+          fixed inset-y-0 left-0 z-30 w-64 flex flex-col shrink-0
+          bg-white border-r border-gray-100
+          transform transition-all duration-200
+          lg:relative lg:translate-x-0 lg:overflow-hidden
           ${open ? 'translate-x-0' : '-translate-x-full'}
+          ${desktopOpen ? 'lg:w-64' : 'lg:w-[76px]'}
         `}
       >
         {/* ── Logo ── */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-white/[0.07]">
+        <div className={`flex items-center justify-between px-4 py-4 border-b border-gray-100 ${collapsed ? 'lg:justify-center lg:px-0' : ''}`}>
           <div className="flex items-center gap-2.5">
             <img
               src={logo}
               alt="Logo Taller Hermanos Juarez"
-              className="w-9 h-9 rounded-xl object-contain bg-white p-0.5 shrink-0 shadow-md"
+              className="w-9 h-9 rounded-xl object-contain bg-white p-0.5 shrink-0 shadow-sm ring-1 ring-gray-100"
             />
-            <div>
-              <p className="text-sm font-bold text-white leading-tight">Hermanos Juarez</p>
-              <p className="text-[11px] text-white/35 leading-tight">Sistema de Gestión</p>
+            <div className={collapsed ? 'lg:hidden' : ''}>
+              <p className="text-sm font-bold text-gray-900 leading-tight">Hermanos Juarez</p>
+              <p className="text-[11px] text-gray-400 leading-tight">Sistema de Gestión</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+            className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* ── Navegación ── */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2.5 space-y-5">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2.5 space-y-5">
           {navGroups.map((group, gi) => (
             <div key={gi}>
               {group.label && (
-                <p className="px-3 mb-2 text-[10px] font-semibold text-white/25 uppercase tracking-[0.13em]">
+                <p className={`px-3 mb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-[0.13em] whitespace-nowrap ${collapsed ? 'lg:hidden' : ''}`}>
                   {group.label}
                 </p>
               )}
               <div>
                 {group.items.map(item => (
-                  <NavItem key={item.to} {...item} onClose={onClose} />
+                  <NavItem key={item.to} {...item} onClose={onClose} collapsed={collapsed} />
                 ))}
               </div>
             </div>
@@ -133,9 +138,9 @@ export default function Sidebar({ open, onClose }) {
         </nav>
 
         {/* ── Configuración ── */}
-        <div className="px-2.5 pb-3 border-t border-white/[0.07] pt-3 space-y-0.5">
-          <NavItem to="/activity-log" icon={History} label="Auditoría" onClose={onClose} />
-          <NavItem to="/settings" icon={Cog} label="Configuración" onClose={onClose} />
+        <div className="px-2.5 pb-3 border-t border-gray-100 pt-3 space-y-0.5">
+          <NavItem to="/activity-log" icon={History} label="Auditoría" onClose={onClose} collapsed={collapsed} />
+          <NavItem to="/settings" icon={Cog} label="Configuración" onClose={onClose} collapsed={collapsed} />
         </div>
 
       </aside>

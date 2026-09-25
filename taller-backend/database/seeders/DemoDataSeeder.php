@@ -53,7 +53,7 @@ class DemoDataSeeder extends Seeder
         // ═══════════════════════════════════════════════════════════════════
         // OT-2026-001 — Cambio de aceite Toyota Corolla (entregado, pagada)
         // ═══════════════════════════════════════════════════════════════════
-        $wo1 = WorkOrder::updateOrCreate(['number' => 'OT-2026-001'], [
+        $wo1 = WorkOrder::updateOrCreate(['number' => 'OT-2026-0001'], [
             'customer_id'    => $juan->id,
             'vehicle_id'     => $corolla->id,
             'employee_id'    => $empCarlos->id,
@@ -118,10 +118,15 @@ class DemoDataSeeder extends Seeder
             'subtotal'          => 28800,
             'discount_percent'  => 0,
             'discount_amount'   => 0,
-            'tax_percent'       => 0,
-            'tax_amount'        => 0,
-            'total'             => 28800,
-            'amount_paid'       => 28800,
+            'exempt_amount'     => 0,
+            'taxed_15_amount'   => 28800,
+            'tax_15_amount'     => 4320,
+            'taxed_18_amount'   => 0,
+            'tax_18_amount'     => 0,
+            'tax_percent'       => 15,
+            'tax_amount'        => 4320,
+            'total'             => 33120,
+            'amount_paid'       => 33120,
             'balance'           => 0,
             'issued_at'         => now()->subDays(8),
             'paid_at'           => now()->subDays(8),
@@ -133,7 +138,7 @@ class DemoDataSeeder extends Seeder
                 'customer_id'   => $juan->id,
                 'user_id'       => $admin?->id,
                 'method'        => 'efectivo',
-                'amount'        => 28800,
+                'amount'        => 33120,
                 'payment_date'  => now()->subDays(8)->toDateString(),
                 'notes'         => 'Pago completo al momento de la entrega.',
             ]);
@@ -142,7 +147,7 @@ class DemoDataSeeder extends Seeder
         // ═══════════════════════════════════════════════════════════════════
         // OT-2026-002 — Frenos Honda Civic (entregado, pago parcial)
         // ═══════════════════════════════════════════════════════════════════
-        $wo2 = WorkOrder::updateOrCreate(['number' => 'OT-2026-002'], [
+        $wo2 = WorkOrder::updateOrCreate(['number' => 'OT-2026-0002'], [
             'customer_id'    => $maria->id,
             'vehicle_id'     => $civic->id,
             'employee_id'    => $empAndres->id,
@@ -216,11 +221,16 @@ class DemoDataSeeder extends Seeder
             'subtotal'          => 66800,
             'discount_percent'  => 0,
             'discount_amount'   => 0,
-            'tax_percent'       => 0,
-            'tax_amount'        => 0,
-            'total'             => 66800,
+            'exempt_amount'     => 0,
+            'taxed_15_amount'   => 0,
+            'tax_15_amount'     => 0,
+            'taxed_18_amount'   => 66800,
+            'tax_18_amount'     => 12024,
+            'tax_percent'       => 18,
+            'tax_amount'        => 12024,
+            'total'             => 78824,
             'amount_paid'       => 30000,
-            'balance'           => 36800,
+            'balance'           => 48824,
             'issued_at'         => now()->subDays(4),
         ]);
 
@@ -233,14 +243,14 @@ class DemoDataSeeder extends Seeder
                 'amount'        => 30000,
                 'payment_date'  => now()->subDays(4)->toDateString(),
                 'reference'     => 'TRF-20260702',
-                'notes'         => 'Abono inicial. Saldo pendiente: L 36,800.',
+                'notes'         => 'Abono inicial. Saldo pendiente: L 48,824.',
             ]);
         }
 
         // ═══════════════════════════════════════════════════════════════════
         // OT-2026-003 — Banda distribución Suzuki Grand Vitara (listo, facturada, sin pago)
         // ═══════════════════════════════════════════════════════════════════
-        $wo3 = WorkOrder::updateOrCreate(['number' => 'OT-2026-003'], [
+        $wo3 = WorkOrder::updateOrCreate(['number' => 'OT-2026-0003'], [
             'customer_id'    => $roberto->id,
             'vehicle_id'     => $vitara->id,
             'employee_id'    => $empMario->id,
@@ -305,6 +315,11 @@ class DemoDataSeeder extends Seeder
             'subtotal'          => 83000,
             'discount_percent'  => 0,
             'discount_amount'   => 0,
+            'exempt_amount'     => 83000,
+            'taxed_15_amount'   => 0,
+            'tax_15_amount'     => 0,
+            'taxed_18_amount'   => 0,
+            'tax_18_amount'     => 0,
             'tax_percent'       => 0,
             'tax_amount'        => 0,
             'total'             => 83000,
@@ -316,7 +331,7 @@ class DemoDataSeeder extends Seeder
         // ═══════════════════════════════════════════════════════════════════
         // OT-2026-004 — Alineación Kia Sportage (en_progreso, sin factura)
         // ═══════════════════════════════════════════════════════════════════
-        $wo4 = WorkOrder::updateOrCreate(['number' => 'OT-2026-004'], [
+        $wo4 = WorkOrder::updateOrCreate(['number' => 'OT-2026-0004'], [
             'customer_id'    => $ana->id,
             'vehicle_id'     => $sportage->id,
             'employee_id'    => $empAndres->id,
@@ -354,7 +369,7 @@ class DemoDataSeeder extends Seeder
         // ═══════════════════════════════════════════════════════════════════
         // OT-2026-005 — Diagnóstico Nissan Frontier (diagnostico)
         // ═══════════════════════════════════════════════════════════════════
-        WorkOrder::updateOrCreate(['number' => 'OT-2026-005'], [
+        WorkOrder::updateOrCreate(['number' => 'OT-2026-0005'], [
             'customer_id'    => $carlos->id,
             'vehicle_id'     => $frontier->id,
             'employee_id'    => $empMario->id,
@@ -380,7 +395,7 @@ class DemoDataSeeder extends Seeder
         // ═══════════════════════════════════════════════════════════════════
         // OT-2026-006 — AC Hyundai Tucson (recibido, sin técnico asignado)
         // ═══════════════════════════════════════════════════════════════════
-        WorkOrder::updateOrCreate(['number' => 'OT-2026-006'], [
+        WorkOrder::updateOrCreate(['number' => 'OT-2026-0006'], [
             'customer_id'    => $maria->id,
             'vehicle_id'     => $tucson->id,
             'employee_id'    => null,

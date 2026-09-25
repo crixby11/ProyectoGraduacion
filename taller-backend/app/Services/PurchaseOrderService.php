@@ -7,6 +7,7 @@ use App\Models\InventoryMovement;
 use App\Models\PurchaseOrder;
 use App\Models\SupplierPurchase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PurchaseOrderService
 {
@@ -131,7 +132,7 @@ class PurchaseOrderService
             ->lockForUpdate()
             ->first();
 
-        $seq = $last ? (int) substr($last->number, -4) + 1 : 1;
+        $seq = $last ? ((int) Str::afterLast($last->number, '-')) + 1 : 1;
 
         return sprintf('OC-%s-%04d', $year, $seq);
     }

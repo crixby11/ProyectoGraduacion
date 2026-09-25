@@ -51,20 +51,19 @@ function CustomTooltip({ active, payload, label, type }) {
 
 /* Tarjeta de ranking */
 function RankCard({ rank, employee, metric, metricLabel, metricFmt }) {
-  const medals = ['🥇', '🥈', '🥉']
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-primary-100 hover:bg-primary-50/30 transition-colors">
-      <span className="text-xl w-7 text-center shrink-0">
-        {rank <= 3 ? medals[rank - 1] : <span className="text-sm font-bold text-gray-400">#{rank}</span>}
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-colors">
+      <span className="w-7 h-7 shrink-0 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
+        {rank}
       </span>
       <div className="flex-1 min-w-0">
-        <Link to={`/employees/${employee.id}`} className="text-sm font-semibold text-gray-800 hover:text-primary-600 truncate block">
+        <Link to={`/employees/${employee.id}`} className="text-sm font-semibold text-gray-800 hover:text-gray-900 truncate block">
           {employee.name}
         </Link>
         {employee.specialty && <p className="text-xs text-gray-400 truncate">{employee.specialty}</p>}
       </div>
       <div className="text-right shrink-0">
-        <p className="text-sm font-bold text-primary-700">{metricFmt(metric)}</p>
+        <p className="text-sm font-bold text-gray-900">{metricFmt(metric)}</p>
         <p className="text-[10px] text-gray-400">{metricLabel}</p>
       </div>
     </div>
@@ -137,14 +136,14 @@ export default function EmployeeStats() {
       {/* KPIs globales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Ingresos generados', value: fmtMoney(totals.revenue), icon: DollarSign, color: 'bg-blue-500' },
-          { label: 'Horas trabajadas',   value: fmtH(totals.hours),  icon: Clock,       color: 'bg-emerald-500' },
-          { label: 'OTs atendidas',      value: totals.ots,           icon: Trophy,      color: 'bg-amber-500' },
-          { label: 'Total bonos',        value: fmtMoney(totals.bonuses),  icon: Gift,        color: 'bg-violet-500' },
+          { label: 'Ingresos generados', value: fmtMoney(totals.revenue), icon: DollarSign },
+          { label: 'Horas trabajadas',   value: fmtH(totals.hours),  icon: Clock },
+          { label: 'OTs atendidas',      value: totals.ots,           icon: Trophy },
+          { label: 'Total bonos',        value: fmtMoney(totals.bonuses),  icon: Gift },
         ].map((k) => (
           <div key={k.label} className="card p-4 flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl ${k.color} flex items-center justify-center shrink-0`}>
-              <k.icon size={18} className="text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+              <k.icon size={18} className="text-gray-500" />
             </div>
             <div>
               <p className="text-xs text-gray-500">{k.label}</p>

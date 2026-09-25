@@ -11,6 +11,7 @@ use App\Models\Vehicle;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class QuoteService
 {
@@ -200,7 +201,7 @@ class QuoteService
             ->lockForUpdate()
             ->first();
 
-        $seq = $last ? (int) substr($last->number, -4) + 1 : 1;
+        $seq = $last ? ((int) Str::afterLast($last->number, '-')) + 1 : 1;
 
         return sprintf('COT-%s-%04d', $year, $seq);
     }

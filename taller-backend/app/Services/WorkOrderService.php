@@ -8,6 +8,7 @@ use App\Models\WorkOrder;
 use App\Models\WoPart;
 use App\Models\WoService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class WorkOrderService
 {
@@ -239,7 +240,7 @@ class WorkOrderService
             ->lockForUpdate()
             ->first();
 
-        $seq = $last ? (int) substr($last->number, -4) + 1 : 1;
+        $seq = $last ? ((int) Str::afterLast($last->number, '-')) + 1 : 1;
 
         return sprintf('OT-%s-%04d', $year, $seq);
     }

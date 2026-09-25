@@ -1,4 +1,4 @@
-import { LogOut, Menu } from 'lucide-react'
+import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -28,7 +28,7 @@ function getTitle(pathname) {
 }
 
 /* ── Header ────────────────────────────────────────────────── */
-export default function Header({ onMenuClick }) {
+export default function Header({ onMenuClick, desktopOpen, onToggleSidebar }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -48,6 +48,15 @@ export default function Header({ onMenuClick }) {
         className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
       >
         <Menu size={20} />
+      </button>
+
+      {/* Botón esconder/mostrar sidebar (escritorio) */}
+      <button
+        onClick={onToggleSidebar}
+        className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+        title={desktopOpen ? 'Colapsar menú' : 'Expandir menú'}
+      >
+        {desktopOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
       </button>
 
       {/* Título de página */}
