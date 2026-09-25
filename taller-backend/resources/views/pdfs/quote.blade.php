@@ -214,6 +214,36 @@
                         <td class="label">Repuestos</td>
                         <td class="amount">L {{ number_format($quote->subtotal_parts, 2) }}</td>
                     </tr>
+                    <tr class="divider">
+                        <td class="label">Subtotal</td>
+                        <td class="amount">L {{ number_format($quote->subtotal, 2) }}</td>
+                    </tr>
+                    @if($quote->discount_amount > 0)
+                    <tr>
+                        <td class="label">Descuento ({{ number_format($quote->discount_percent, 0) }}%)</td>
+                        <td class="amount">- L {{ number_format($quote->discount_amount, 2) }}</td>
+                    </tr>
+                    @endif
+                    <tr>
+                        <td class="label">Exonerado</td>
+                        <td class="amount">L {{ number_format($quote->exempt_amount, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Gravado 15%</td>
+                        <td class="amount">L {{ number_format($quote->taxed_15_amount, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">ISV 15%</td>
+                        <td class="amount">L {{ number_format($quote->tax_15_amount, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Gravado 18%</td>
+                        <td class="amount">L {{ number_format($quote->taxed_18_amount, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">ISV 18%</td>
+                        <td class="amount">L {{ number_format($quote->tax_18_amount, 2) }}</td>
+                    </tr>
                     <tr class="grand">
                         <td>TOTAL ESTIMADO</td>
                         <td class="amount">L {{ number_format($quote->total, 2) }}</td>

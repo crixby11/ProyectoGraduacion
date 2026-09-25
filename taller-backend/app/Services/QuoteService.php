@@ -20,6 +20,11 @@ class QuoteService
         return DB::transaction(function () use ($data) {
             $data['number'] = $this->generateNumber();
             $data['issued_at'] ??= now();
+            // Explícito en vez de confiar en el default de la columna: Eloquent
+            // no refleja el default de la BD en el modelo recién creado, así
+            // que si no se fija aquí, tax_mode queda null en memoria y
+            // recalculateTotals() no cae en ninguna de las tres categorías.
+            $data['tax_mode'] ??= 'estandar';
 
             if (isset($data['customer_id']) && ! isset($data['customer_name'])) {
                 $customer = Customer::find($data['customer_id']);
@@ -49,6 +54,7 @@ class QuoteService
         $this->assertEditable($quote);
 
         $quote->update($data);
+        $quote->recalculateTotals();
 
         return $quote->fresh();
     }

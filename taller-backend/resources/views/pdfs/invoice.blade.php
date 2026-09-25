@@ -204,10 +204,6 @@
                 <table>
                     <tr>
                         <td class="label">Sub-total Exonerados</td>
-                        <td class="amount">L 0.00</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Sub-total Importe Exento</td>
                         <td class="amount">L {{ number_format($exento, 2) }}</td>
                     </tr>
                     <tr>

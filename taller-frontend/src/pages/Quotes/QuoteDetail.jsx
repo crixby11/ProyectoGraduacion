@@ -57,6 +57,7 @@ export default function QuoteDetail() {
   const { register: regSvc, handleSubmit: handleSvc, reset: resetSvc, watch: watchSvc, setValue: setSvcValue } = useForm()
   const { register: regPart, handleSubmit: handlePart, reset: resetPart, watch: watchPart, setValue: setPartValue } = useForm()
   const { register: regDesc, handleSubmit: handleDesc } = useForm()
+  const { register: regTax, handleSubmit: handleTax } = useForm()
   const { register: regESvc, handleSubmit: handleESvc, reset: resetESvc } = useForm()
   const { register: regEPart, handleSubmit: handleEPart, reset: resetEPart } = useForm()
 
@@ -122,6 +123,12 @@ export default function QuoteDetail() {
   const mutUpdateDesc = useMutation({
     mutationFn: (d) => updateQuote(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['quote', id] }); toast.success('Cotización actualizada') },
+    onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
+  })
+
+  const mutUpdateTax = useMutation({
+    mutationFn: (d) => updateQuote(id, d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['quote', id] }); toast.success('Impuesto actualizado') },
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
 
@@ -274,10 +281,42 @@ export default function QuoteDetail() {
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between"><span className="text-gray-500">Servicios</span><span>{fmtMoney(quote.subtotal_services)}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">Repuestos</span><span>{fmtMoney(quote.subtotal_parts)}</span></div>
+              <div className="flex justify-between border-t border-gray-100 pt-1.5 mt-1.5"><span className="text-gray-500">Subtotal</span><span>{fmtMoney(quote.subtotal)}</span></div>
+              {quote.discount_amount > 0 && (
+                <div className="flex justify-between text-gray-500"><span>Descuento ({quote.discount_percent}%)</span><span>- {fmtMoney(quote.discount_amount)}</span></div>
+              )}
+              <div className="flex justify-between text-gray-500"><span>Exonerado</span><span>{fmtMoney(quote.exempt_amount)}</span></div>
+              <div className="flex justify-between text-gray-500"><span>Gravado 15%</span><span>{fmtMoney(quote.taxed_15_amount)}</span></div>
+              <div className="flex justify-between text-gray-500"><span>ISV 15%</span><span>{fmtMoney(quote.tax_15_amount)}</span></div>
+              <div className="flex justify-between text-gray-500"><span>Gravado 18%</span><span>{fmtMoney(quote.taxed_18_amount)}</span></div>
+              <div className="flex justify-between text-gray-500"><span>ISV 18%</span><span>{fmtMoney(quote.tax_18_amount)}</span></div>
               <div className="flex justify-between font-semibold text-base border-t border-gray-200 pt-1.5 mt-1.5">
                 <span>Total</span><span className="text-primary-700">{fmtMoney(quote.total)}</span>
               </div>
             </div>
+
+            {editable && (
+              <form
+                onSubmit={handleTax((d) => mutUpdateTax.mutate({ discount_percent: Number(d.discount_percent || 0), tax_mode: d.tax_mode }))}
+                className="mt-4 pt-4 border-t border-gray-100 space-y-3"
+              >
+                <div>
+                  <label className="label">Descuento %</label>
+                  <input {...regTax('discount_percent')} type="number" step="0.01" min="0" max="100" defaultValue={quote.discount_percent} className="input" />
+                </div>
+                <div>
+                  <label className="label">Impuesto</label>
+                  <select {...regTax('tax_mode')} defaultValue={quote.tax_mode} className="input">
+                    <option value="estandar">Estándar (ISV 15%)</option>
+                    <option value="exonerado">Exonerado (0%)</option>
+                    <option value="gravado_18">ISV 18%</option>
+                  </select>
+                </div>
+                <button type="submit" disabled={mutUpdateTax.isPending} className="btn-secondary w-full text-sm">
+                  {mutUpdateTax.isPending ? 'Guardando...' : 'Actualizar impuesto'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
 

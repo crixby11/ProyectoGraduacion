@@ -97,6 +97,8 @@ class QuoteController extends Controller
             'vehicle_displacement' => 'nullable|string|max:20',
             'vehicle_description' => 'nullable|string',
             'work_order_id' => 'nullable|exists:work_orders,id',
+            'discount_percent' => 'nullable|numeric|min:0|max:100',
+            'tax_mode' => 'nullable|in:estandar,exonerado,gravado_18',
         ]);
 
         $quote = $this->quoteService->update($quote, $data);

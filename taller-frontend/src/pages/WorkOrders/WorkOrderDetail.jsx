@@ -464,12 +464,15 @@ export default function WorkOrderDetail() {
 
               {/* Resumen de montos */}
               <div className="space-y-1 text-sm border-t border-gray-100 pt-2">
+                <div className="flex justify-between text-gray-500"><span>Subtotal</span><span>{fmtMoney(wo.invoice.subtotal)}</span></div>
                 {wo.invoice.discount_amount > 0 && (
                   <div className="flex justify-between text-gray-500"><span>Descuento</span><span>- {fmtMoney(wo.invoice.discount_amount)}</span></div>
                 )}
                 <div className="flex justify-between text-gray-500"><span>Exonerado</span><span>{fmtMoney(wo.invoice.exempt_amount)}</span></div>
-                <div className="flex justify-between text-gray-500"><span>Gravado 15% <span className="text-xs text-gray-400">(ISV {fmtMoney(wo.invoice.tax_15_amount)})</span></span><span>{fmtMoney(wo.invoice.taxed_15_amount)}</span></div>
-                <div className="flex justify-between text-gray-500"><span>Gravado 18% <span className="text-xs text-gray-400">(ISV {fmtMoney(wo.invoice.tax_18_amount)})</span></span><span>{fmtMoney(wo.invoice.taxed_18_amount)}</span></div>
+                <div className="flex justify-between text-gray-500"><span>Gravado 15%</span><span>{fmtMoney(wo.invoice.taxed_15_amount)}</span></div>
+                <div className="flex justify-between text-gray-500"><span>ISV 15%</span><span>{fmtMoney(wo.invoice.tax_15_amount)}</span></div>
+                <div className="flex justify-between text-gray-500"><span>Gravado 18%</span><span>{fmtMoney(wo.invoice.taxed_18_amount)}</span></div>
+                <div className="flex justify-between text-gray-500"><span>ISV 18%</span><span>{fmtMoney(wo.invoice.tax_18_amount)}</span></div>
                 <div className="flex justify-between font-semibold text-primary-700"><span>Total factura</span><span>{fmtMoney(wo.invoice.total)}</span></div>
               </div>
 
@@ -1138,12 +1141,15 @@ export default function WorkOrderDetail() {
             const total = afterDiscount + tax15 + tax18
             return (
               <dl className="space-y-1 text-sm border-t border-gray-100 pt-3">
+                <div className="flex justify-between text-gray-500"><dt>Subtotal</dt><dd>{fmtMoney(subtotal)}</dd></div>
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-gray-500"><dt>Descuento</dt><dd>- {fmtMoney(discountAmount)}</dd></div>
+                  <div className="flex justify-between text-gray-500"><dt>Descuento ({discountPct}%)</dt><dd>- {fmtMoney(discountAmount)}</dd></div>
                 )}
                 <div className="flex justify-between text-gray-500"><dt>Exonerado</dt><dd>{fmtMoney(exempt)}</dd></div>
-                <div className="flex justify-between text-gray-500"><dt>Gravado 15% <span className="text-xs text-gray-400">(ISV {fmtMoney(tax15)})</span></dt><dd>{fmtMoney(taxed15)}</dd></div>
-                <div className="flex justify-between text-gray-500"><dt>Gravado 18% <span className="text-xs text-gray-400">(ISV {fmtMoney(tax18)})</span></dt><dd>{fmtMoney(taxed18)}</dd></div>
+                <div className="flex justify-between text-gray-500"><dt>Gravado 15%</dt><dd>{fmtMoney(taxed15)}</dd></div>
+                <div className="flex justify-between text-gray-500"><dt>ISV 15%</dt><dd>{fmtMoney(tax15)}</dd></div>
+                <div className="flex justify-between text-gray-500"><dt>Gravado 18%</dt><dd>{fmtMoney(taxed18)}</dd></div>
+                <div className="flex justify-between text-gray-500"><dt>ISV 18%</dt><dd>{fmtMoney(tax18)}</dd></div>
                 <div className="flex justify-between font-bold text-base text-primary-700 border-t border-gray-200 pt-1.5 mt-1.5">
                   <dt>Total a facturar</dt><dd>{fmtMoney(total)}</dd>
                 </div>
