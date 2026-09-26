@@ -3,15 +3,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Banknote, CreditCard, ArrowLeftRight, MoreHorizontal, Download, DollarSign } from 'lucide-react'
-import { fmtDate, fmtMoney } from '../utils/date'
+import { Plus, Banknote, CreditCard, ArrowLeftRight, MoreHorizontal, Download, DollarSign, Eye } from 'lucide-react'
+import { fmtDate, fmtDateTime, fmtMoney } from '../utils/date'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { getPayments, createPayment } from '../api/payments'
+import { getPayments, getPayment, createPayment } from '../api/payments'
 import { getInvoices } from '../api/invoices'
 import PageHeader from '../components/ui/PageHeader'
 import { Table, Pagination } from '../components/ui/Table'
 import Modal from '../components/ui/Modal'
+import StatusBadge from '../components/ui/StatusBadge'
 import CashChange from '../components/ui/CashChange'
 import { paymentPayload } from '../utils/payments'
 
@@ -73,6 +74,7 @@ export default function Payments() {
   const qc = useQueryClient()
   const [page, setPage] = useState(1)
   const [modalOpen, setModalOpen] = useState(false)
+  const [detailId, setDetailId] = useState(null)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [method, setMethod] = useState('')
@@ -107,6 +109,12 @@ export default function Payments() {
       return [...pend, ...part].sort((a, b) => a.number.localeCompare(b.number))
     },
     enabled: modalOpen,
+  })
+
+  const { data: detail, isLoading: detailLoading } = useQuery({
+    queryKey: ['payment-detail', detailId],
+    queryFn: () => getPayment(detailId).then((r) => r.data),
+    enabled: !!detailId,
   })
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
@@ -181,6 +189,16 @@ export default function Payments() {
       ),
     },
     { key: 'reference', label: 'Referencia', render: (r) => <span className="text-gray-400 text-xs font-mono">{r.reference ?? '—'}</span> },
+    {
+      key: 'actions',
+      label: '',
+      width: '48px',
+      render: (r) => (
+        <button onClick={() => setDetailId(r.id)} className="btn-ghost p-1.5 text-gray-400 hover:text-primary-600" title="Ver detalle del pago">
+          <Eye size={16} />
+        </button>
+      ),
+    },
   ]
 
   return (
@@ -262,6 +280,59 @@ export default function Payments() {
         <Table columns={columns} data={data?.data ?? []} loading={isLoading} emptyMessage="No hay pagos en el período seleccionado" />
         <Pagination meta={data} onPageChange={setPage} />
       </div>
+
+      <Modal open={!!detailId} onClose={() => setDetailId(null)} title="Detalle del pago" size="sm">
+        {detailLoading || !detail ? (
+          <p className="text-sm text-gray-400 py-8 text-center">Cargando...</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="text-center bg-gray-50 rounded-xl py-4">
+              <p className="text-xs text-gray-500">Monto abonado</p>
+              <p className="text-3xl font-bold text-green-600">{fmtMoney(detail.amount)}</p>
+              <p className="text-sm text-gray-500 mt-1">{METHOD_LABELS[detail.method] ?? detail.method} · {fmtDate(detail.payment_date)}</p>
+            </div>
+
+            {detail.amount_received != null && (
+              <dl className="space-y-1.5 text-sm rounded-xl border border-green-100 bg-green-50/50 p-3">
+                <div className="flex justify-between"><dt className="text-gray-500">Efectivo recibido</dt><dd className="font-medium">{fmtMoney(detail.amount_received)}</dd></div>
+                <div className="flex justify-between"><dt className="text-gray-500">Cambio devuelto</dt><dd className="font-semibold text-green-700">{fmtMoney(detail.change_given)}</dd></div>
+              </dl>
+            )}
+
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between gap-4"><dt className="text-gray-500">Factura</dt><dd className="font-mono">{detail.invoice?.number ?? '—'}</dd></div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-500">Orden de trabajo</dt>
+                <dd>{detail.work_order ? <Link to={`/work-orders/${detail.work_order.id}`} className="font-mono text-primary-600 hover:underline">{detail.work_order.number}</Link> : '—'}</dd>
+              </div>
+              <div className="flex justify-between gap-4"><dt className="text-gray-500">Cliente</dt><dd className="text-right">{detail.customer?.name ?? '—'}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-gray-500">Referencia</dt><dd className="font-mono text-right">{detail.reference || '—'}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-gray-500">Registrado por</dt><dd className="text-right">{detail.user?.name ?? '—'}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-gray-500">Registrado el</dt><dd className="text-right">{fmtDateTime(detail.created_at)}</dd></div>
+              {detail.notes && (
+                <div>
+                  <dt className="text-gray-500">Notas</dt>
+                  <dd className="mt-0.5 whitespace-pre-wrap">{detail.notes}</dd>
+                </div>
+              )}
+            </dl>
+
+            {detail.invoice && (
+              <div className="border-t border-gray-100 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado actual de la factura</p>
+                  <StatusBadge status={detail.invoice.status} />
+                </div>
+                <dl className="space-y-1.5 text-sm">
+                  <div className="flex justify-between"><dt className="text-gray-500">Total factura</dt><dd>{fmtMoney(detail.invoice.total)}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500">Pagado a la fecha</dt><dd className="text-green-600">{fmtMoney(detail.invoice.amount_paid)}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500">Saldo pendiente</dt><dd className={Number(detail.invoice.balance) > 0 ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'}>{fmtMoney(detail.invoice.balance)}</dd></div>
+                </dl>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); reset() }} title="Registrar pago">
         <form onSubmit={handleSubmit((d) => save.mutate(d))} className="space-y-4">

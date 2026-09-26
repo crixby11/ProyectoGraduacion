@@ -103,7 +103,7 @@ class PaymentController extends Controller
 
     public function show(Payment $payment)
     {
-        return response()->json($payment->load(['invoice', 'workOrder', 'customer']));
+        return response()->json($payment->load(['invoice', 'workOrder', 'customer', 'user:id,name']));
     }
 
     public function destroy(Payment $payment)
