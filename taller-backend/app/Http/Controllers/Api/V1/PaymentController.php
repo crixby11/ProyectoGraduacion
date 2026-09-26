@@ -58,6 +58,7 @@ class PaymentController extends Controller
             'invoice_id' => 'required|exists:invoices,id',
             'method' => 'required|in:efectivo,transferencia,tarjeta,otro',
             'amount' => 'required|numeric|min:0.01',
+            'amount_received' => 'nullable|numeric|min:0',
             'payment_date' => 'required|date',
             'reference' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
@@ -71,6 +72,22 @@ class PaymentController extends Controller
                     'amount' => ['El monto supera el saldo pendiente de L ' . number_format($invoice->balance, 2)],
                 ]);
             }
+
+            // Efectivo recibido y cambio: solo aplica a pagos en efectivo, y el cambio
+            // lo calcula el servidor (lo recibido - lo abonado), no lo que mande el cliente.
+            $received = null;
+            $change = 0;
+            if ($data['method'] === 'efectivo' && isset($data['amount_received'])) {
+                $received = round((float) $data['amount_received'], 2);
+                if ($received < (float) $data['amount']) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'amount_received' => ['El efectivo recibido no puede ser menor al monto abonado'],
+                    ]);
+                }
+                $change = round($received - (float) $data['amount'], 2);
+            }
+            $data['amount_received'] = $received;
+            $data['change_given'] = $change;
 
             $payment = Payment::create(array_merge($data, [
                 'work_order_id' => $invoice->work_order_id,

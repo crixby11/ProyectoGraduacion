@@ -15,6 +15,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import FileTypeIcon from '../../components/ui/FileTypeIcon'
 import FileUploadZone from '../../components/ui/FileUploadZone'
 import { fmtDate, fmtMoney, fmtFileSize } from '../../utils/date'
+import { packLabel } from '../../utils/inventory'
 
 const TAX_LABELS = { exento: 'Exento', gravado_15: 'Gravado 15%', gravado_18: 'Gravado 18%' }
 
@@ -243,7 +244,10 @@ export default function PurchaseOrderDetail() {
                   {po.items.map((it) => (
                     <tr key={it.id} className="border-b border-gray-50">
                       <td className="py-1.5">{it.item_name}<br /><span className="text-xs text-gray-400 font-mono">{it.item_sku}</span></td>
-                      <td className="text-right">{it.quantity} {it.unit}</td>
+                      <td className="text-right">
+                        {it.quantity} {packLabel(it.unit, it.units_per_pack)}
+                        {it.units_per_pack > 1 && <span className="block text-xs text-gray-400">= {it.quantity * it.units_per_pack} unidades</span>}
+                      </td>
                       <td className="text-right">{fmtMoney(it.unit_cost)}</td>
                       <td className="text-right">{Number(it.discount) > 0 ? fmtMoney(it.discount) : '—'}</td>
                       <td className="pl-2 text-xs text-gray-500">{TAX_LABELS[it.tax_type]}</td>

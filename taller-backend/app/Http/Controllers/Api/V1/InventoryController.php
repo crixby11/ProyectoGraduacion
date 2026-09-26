@@ -7,6 +7,7 @@ use App\Models\Inventory;
 use App\Models\InventoryMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class InventoryController extends Controller
 {
@@ -48,18 +49,22 @@ class InventoryController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:150',
             'sku' => 'nullable|string|max:60|unique:inventory,sku',
-            'brand' => 'nullable|string|max:60',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'category' => 'nullable|string|max:80',
+            'brand' => 'required|string|max:60',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'category' => 'required|string|max:80',
             'description' => 'nullable|string',
             'stock' => 'required|integer|min:0',
             'min_stock' => 'required|integer|min:0',
             'cost' => 'required|numeric|min:0',
             'sale_price' => 'required|numeric|min:0',
-            'unit' => 'nullable|string|max:20',
+            'unit' => ['required', Rule::in(Inventory::unitKeys())],
+            'units_per_pack' => 'nullable|integer|min:1|max:100000|required_if:unit,caja,ristra',
             'active' => 'nullable|boolean',
             'notes' => 'nullable|string',
         ]);
+
+        $data['unit'] = $data['unit'] ?? 'unidad';
+        $data['units_per_pack'] = Inventory::resolvePackSize($data['unit'], $data['units_per_pack'] ?? null);
 
         return response()->json(Inventory::create($data), 201);
     }
@@ -74,17 +79,23 @@ class InventoryController extends Controller
         $data = $request->validate([
             'name' => 'sometimes|required|string|max:150',
             'sku' => 'nullable|string|max:60|unique:inventory,sku,' . $inventory->id,
-            'brand' => 'nullable|string|max:60',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'category' => 'nullable|string|max:80',
+            'brand' => 'sometimes|required|string|max:60',
+            'supplier_id' => 'sometimes|required|exists:suppliers,id',
+            'category' => 'sometimes|required|string|max:80',
             'description' => 'nullable|string',
             'min_stock' => 'nullable|integer|min:0',
             'cost' => 'nullable|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0',
-            'unit' => 'nullable|string|max:20',
+            'unit' => ['nullable', Rule::in(Inventory::unitKeys())],
+            'units_per_pack' => 'nullable|integer|min:1|max:100000|required_if:unit,caja,ristra',
             'active' => 'nullable|boolean',
             'notes' => 'nullable|string',
         ]);
+
+        if (isset($data['unit']) || isset($data['units_per_pack'])) {
+            $unit = $data['unit'] ?? $inventory->unit;
+            $data['units_per_pack'] = Inventory::resolvePackSize($unit, $data['units_per_pack'] ?? $inventory->units_per_pack);
+        }
 
         $inventory->update($data);
 

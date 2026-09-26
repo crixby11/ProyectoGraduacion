@@ -22,11 +22,13 @@ class Payment extends Model
 
     protected $fillable = [
         'invoice_id', 'work_order_id', 'customer_id', 'user_id',
-        'method', 'amount', 'payment_date', 'reference', 'notes',
+        'method', 'amount', 'amount_received', 'change_given', 'payment_date', 'reference', 'notes',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'amount_received' => 'decimal:2',
+        'change_given' => 'decimal:2',
         'payment_date' => 'date',
     ];
 

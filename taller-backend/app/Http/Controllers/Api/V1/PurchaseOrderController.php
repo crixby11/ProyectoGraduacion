@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory;
 use App\Models\PurchaseOrder;
 use App\Services\PurchaseOrderService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PurchaseOrderController extends Controller
 {
@@ -48,7 +50,7 @@ class PurchaseOrderController extends Controller
         $data = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'supplier_invoice_number' => 'nullable|string|max:60',
-            'payment_terms' => 'nullable|string|max:60',
+            'payment_terms' => 'required|in:Contado,Crédito 15 días,Crédito 30 días,Crédito 45 días,Crédito 60 días',
             'order_date' => 'nullable|date',
             'notes' => 'nullable|string',
 
@@ -56,7 +58,8 @@ class PurchaseOrderController extends Controller
             'items.*.inventory_id' => 'nullable|exists:inventory,id',
             'items.*.item_name' => 'required_without:items.*.inventory_id|string|max:150',
             'items.*.item_sku' => 'nullable|string|max:60',
-            'items.*.unit' => 'nullable|string|max:20',
+            'items.*.unit' => ['required_without:items.*.inventory_id', 'nullable', Rule::in(Inventory::unitKeys())],
+            'items.*.units_per_pack' => 'nullable|integer|min:1|max:100000',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_cost' => 'required|numeric|min:0',
             'items.*.discount' => 'nullable|numeric|min:0',

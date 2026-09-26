@@ -11,10 +11,11 @@ class PurchaseOrderItem extends Model
 
     protected $fillable = [
         'purchase_order_id', 'inventory_id',
-        'item_name', 'item_sku', 'unit', 'quantity', 'unit_cost', 'discount', 'tax_type', 'subtotal',
+        'item_name', 'item_sku', 'unit', 'units_per_pack', 'quantity', 'unit_cost', 'discount', 'tax_type', 'subtotal',
     ];
 
     protected $casts = [
+        'units_per_pack' => 'integer',
         'unit_cost' => 'decimal:2',
         'discount' => 'decimal:2',
         'subtotal' => 'decimal:2',

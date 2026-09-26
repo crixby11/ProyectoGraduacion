@@ -69,10 +69,16 @@
         .letters-val { font-size: 10px; font-weight: 600; text-transform: capitalize; margin-top: 2px; }
         .tagline { margin-top: 10px; font-size: 9px; font-weight: bold; font-style: italic; text-align: center; }
 
+        /* Pie de página fijo (se repite en cada hoja), abajo a la derecha */
+        .page-footer { position: fixed; bottom: 48px; right: 24px; font-size: 8px; color: #555; text-align: right; }
+        .page-footer .pnum:before { content: counter(page); }
+
         .bottom-note { padding: 6px 16px 12px; font-size: 8px; color: #555; text-align: center; border-top: 1px solid #cbd5e1; }
     </style>
 </head>
 <body>
+
+    <div class="page-footer">Página <span class="pnum"></span></div>
 
     <div class="page">
 
@@ -87,9 +93,9 @@
                 <img class="header-logo" src="data:image/jpeg;base64,{{ $logoData }}" alt="Logo">
                 @endif
                 <div>
-                    <div class="shop-name">{{ strtoupper($settings['shop_name'] ?? 'TALLER MECÁNICO') }}</div>
+                    <div class="shop-name">{{ mb_strtoupper($settings['shop_name'] ?? 'TALLER MECÁNICO', 'UTF-8') }}</div>
                     @if(!empty($settings['shop_owner']))
-                    <div class="shop-owner">PROP. {{ strtoupper($settings['shop_owner']) }}</div>
+                    <div class="shop-owner">PROP. {{ mb_strtoupper($settings['shop_owner'], 'UTF-8') }}</div>
                     @endif
                     <div class="shop-meta">
                         @if(!empty($settings['shop_address'])){{ $settings['shop_address'] }}@if(!empty($settings['shop_city'])), {{ $settings['shop_city'] }}@endif<br>@endif

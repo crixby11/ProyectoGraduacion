@@ -16,8 +16,11 @@ import { getPayments, createPayment } from '../../api/payments'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
+import CashChange from '../../components/ui/CashChange'
+import { paymentPayload } from '../../utils/payments'
 
 import { fmtDate, fmtDateTime, fmtMoney } from '../../utils/date'
+import { stockUnitLabel } from '../../utils/inventory'
 
 const STATUSES = ['recibido', 'diagnostico', 'en_progreso', 'listo', 'entregado', 'cancelado']
 const round2 = (n) => Math.round(n * 100) / 100
@@ -43,9 +46,9 @@ export default function WorkOrderDetail() {
   // 'entregado' | 'cancelado' | null
   const [confirmStatus, setConfirmStatus] = useState(null)
   const [invoicePreviewModal, setInvoicePreviewModal] = useState(false)
-  // datos { discount_percent, exempt_amount, taxed_18_amount } pendientes de confirmar, o null
+  // datos { discount_percent, exempt_amount } pendientes de confirmar, o null
   const [confirmInvoice, setConfirmInvoice] = useState(null)
-  // { type: 'exempt'|'taxed18' } pendiente de confirmar al activarlo en la vista previa, o null
+  // { type: 'exempt' } pendiente de confirmar al activarlo en la vista previa, o null
   const [taxToggleConfirm, setTaxToggleConfirm] = useState(null)
 
   // Ref para cerrar el dropdown de estado al hacer click afuera
@@ -88,12 +91,12 @@ export default function WorkOrderDetail() {
   const { register: regPart, handleSubmit: handlePart, reset: resetPart, watch: watchPart, setValue: setPartValue } = useForm()
   const { register: regEdit, handleSubmit: handleEdit } = useForm()
   const { register: regVeh, handleSubmit: handleVeh, reset: resetVeh, watch: watchVeh, setValue: setVehValue } = useForm()
-  const { register: regPay, handleSubmit: handlePay, reset: resetPay } = useForm()
+  const { register: regPay, handleSubmit: handlePay, reset: resetPay, watch: watchPay } = useForm()
   const { register: regNote, handleSubmit: handleNote, reset: resetNote, watch: watchNote } = useForm()
   const { register: regESvc, handleSubmit: handleESvc, reset: resetESvc } = useForm()
   const { register: regEPart, handleSubmit: handleEPart, reset: resetEPart } = useForm()
   const { register: regInvGen, handleSubmit: handleInvGen, reset: resetInvGen, watch: watchInvGen, setValue: setInvGenValue } = useForm({
-    defaultValues: { discount_percent: 0, exempt_checked: false, taxed_18_checked: false },
+    defaultValues: { discount_percent: 0, exempt_checked: false },
   })
 
   const selectedSvcId = watchSvc('service_id')
@@ -222,7 +225,7 @@ export default function WorkOrderDetail() {
   })
 
   const mutAddPayment = useMutation({
-    mutationFn: (d) => createPayment({ ...d, invoice_id: wo.invoice.id }),
+    mutationFn: (d) => createPayment({ ...paymentPayload(d, wo.invoice.balance), invoice_id: wo.invoice.id }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['work-order', id] })
       qc.invalidateQueries({ queryKey: ['payments', wo.invoice.id] })
@@ -387,7 +390,7 @@ export default function WorkOrderDetail() {
           </button>
 
           {!wo.invoice ? (
-            <button onClick={() => { resetInvGen({ discount_percent: 0, exempt_checked: false, taxed_18_checked: false }); setInvoicePreviewModal(true) }} disabled={mutGenInvoice.isPending} className="btn-primary">
+            <button onClick={() => { resetInvGen({ discount_percent: 0, exempt_checked: false }); setInvoicePreviewModal(true) }} disabled={mutGenInvoice.isPending} className="btn-primary">
               <FileText size={15} /> Generar factura
             </button>
           ) : (
@@ -481,9 +484,17 @@ export default function WorkOrderDetail() {
               {(invoicePayments ?? []).length > 0 && (
                 <div className="border-t border-gray-100 pt-2 space-y-1">
                   {invoicePayments.map((p) => (
-                    <div key={p.id} className="flex justify-between text-sm">
-                      <span className="text-gray-500 capitalize">{p.method} <span className="text-xs text-gray-400">{fmtDate(p.payment_date)}</span></span>
-                      <span className="text-green-600 font-medium">{fmtMoney(p.amount)}</span>
+                    <div key={p.id} className="text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 capitalize">{p.method} <span className="text-xs text-gray-400">{fmtDate(p.payment_date)}</span></span>
+                        <span className="text-green-600 font-medium">{fmtMoney(p.amount)}</span>
+                      </div>
+                      {p.amount_received != null && (
+                        <p className="text-xs text-gray-400 text-right">
+                          Recibido {fmtMoney(p.amount_received)}
+                          {Number(p.change_given) > 0 && <> · Cambio {fmtMoney(p.change_given)}</>}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -766,7 +777,7 @@ export default function WorkOrderDetail() {
               <option value="">— Seleccionar repuesto —</option>
               {(inventoryItems ?? []).map((i) => (
                 <option key={i.id} value={i.id}>
-                  {i.name}{i.sku ? ` [${i.sku}]` : ''} — Stock: {i.stock} {i.unit}
+                  {i.name}{i.sku ? ` [${i.sku}]` : ''} — Stock: {i.stock} {stockUnitLabel(i.unit)}
                 </option>
               ))}
               <option value="manual">Otro (no está en inventario)</option>
@@ -1014,7 +1025,6 @@ export default function WorkOrderDetail() {
             setConfirmInvoice({
               discount_percent: discountPercent,
               exempt_amount: d.exempt_checked ? afterDiscount : 0,
-              taxed_18_amount: d.taxed_18_checked ? afterDiscount : 0,
             })
           })}
           className="space-y-4"
@@ -1112,18 +1122,6 @@ export default function WorkOrderDetail() {
               />
               Facturar como Exonerado (0%)
             </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded border-gray-300"
-                checked={!!watchInvGen('taxed_18_checked')}
-                onChange={(e) => {
-                  if (e.target.checked) setTaxToggleConfirm({ type: 'taxed18' })
-                  else setInvGenValue('taxed_18_checked', false)
-                }}
-              />
-              Facturar con ISV 18%
-            </label>
           </div>
 
           {(() => {
@@ -1132,11 +1130,9 @@ export default function WorkOrderDetail() {
             const discountAmount = round2(subtotal * discountPct / 100)
             const afterDiscount = subtotal - discountAmount
             const exempt = watchInvGen('exempt_checked') ? afterDiscount : 0
-            const taxed18 = watchInvGen('taxed_18_checked') ? afterDiscount : 0
-            const taxed15 = Math.max(0, afterDiscount - exempt - taxed18)
+            const taxed15 = Math.max(0, afterDiscount - exempt)
             const tax15 = round2(taxed15 * 15 / 100)
-            const tax18 = round2(taxed18 * 18 / 100)
-            const total = afterDiscount + tax15 + tax18
+            const total = afterDiscount + tax15
             return (
               <dl className="space-y-1 text-sm border-t border-gray-100 pt-3">
                 <div className="flex justify-between text-gray-500"><dt>Subtotal</dt><dd>{fmtMoney(subtotal)}</dd></div>
@@ -1146,8 +1142,8 @@ export default function WorkOrderDetail() {
                 <div className="flex justify-between text-gray-500"><dt>Exonerado</dt><dd>{fmtMoney(exempt)}</dd></div>
                 <div className="flex justify-between text-gray-500"><dt>Gravado 15%</dt><dd>{fmtMoney(taxed15)}</dd></div>
                 <div className="flex justify-between text-gray-500"><dt>ISV 15%</dt><dd>{fmtMoney(tax15)}</dd></div>
-                <div className="flex justify-between text-gray-500"><dt>Gravado 18%</dt><dd>{fmtMoney(taxed18)}</dd></div>
-                <div className="flex justify-between text-gray-500"><dt>ISV 18%</dt><dd>{fmtMoney(tax18)}</dd></div>
+                <div className="flex justify-between text-gray-500"><dt>Gravado 18%</dt><dd>{fmtMoney(0)}</dd></div>
+                <div className="flex justify-between text-gray-500"><dt>ISV 18%</dt><dd>{fmtMoney(0)}</dd></div>
                 <div className="flex justify-between font-bold text-base text-primary-700 border-t border-gray-200 pt-1.5 mt-1.5">
                   <dt>Total a facturar</dt><dd>{fmtMoney(total)}</dd>
                 </div>
@@ -1175,22 +1171,16 @@ export default function WorkOrderDetail() {
         onConfirm={() => mutGenInvoice.mutate(confirmInvoice)}
       />
 
-      {/* Confirmación al activar Exonerado / ISV 18% (queda registrado en la factura) */}
+      {/* Confirmación al activar Exonerado (queda registrado en la factura) */}
       <ConfirmDialog
         open={!!taxToggleConfirm}
         onClose={() => setTaxToggleConfirm(null)}
-        title={taxToggleConfirm?.type === 'exempt' ? 'Marcar factura como Exonerado' : 'Facturar con ISV 18%'}
-        message={
-          taxToggleConfirm?.type === 'exempt'
-            ? 'Esta factura quedará registrada como Exonerada (0% de impuesto). ¿Confirmas?'
-            : 'Esta factura quedará registrada con ISV del 18% en vez del 15% estándar. ¿Confirmas?'
-        }
+        title="Marcar factura como Exonerado"
+        message="Esta factura quedará registrada como Exonerada (0% de impuesto). ¿Confirmas?"
         confirmText="Sí, confirmar"
         confirmClass="btn-primary"
         onConfirm={() => {
-          if (!taxToggleConfirm) return
-          setInvGenValue('exempt_checked', taxToggleConfirm.type === 'exempt')
-          setInvGenValue('taxed_18_checked', taxToggleConfirm.type === 'taxed18')
+          setInvGenValue('exempt_checked', true)
           setTaxToggleConfirm(null)
         }}
       />
@@ -1233,13 +1223,14 @@ export default function WorkOrderDetail() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Monto (L) *</label>
-              <input {...regPay('amount')} type="number" step="0.01" min="0.01" max={wo?.invoice?.balance} className="input" required />
+              <input {...regPay('amount')} type="number" step="0.01" min="0.01" max={watchPay('method') === 'efectivo' ? undefined : wo?.invoice?.balance} className="input" required />
             </div>
             <div>
               <label className="label">Fecha *</label>
               <input {...regPay('payment_date')} type="date" className="input" required />
             </div>
           </div>
+          <CashChange method={watchPay('method')} amount={watchPay('amount')} balance={wo?.invoice?.balance} />
           <div>
             <label className="label">Referencia</label>
             <input {...regPay('reference')} className="input" placeholder="N° transferencia, recibo..." />

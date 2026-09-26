@@ -93,7 +93,7 @@
                 <img class="header-logo" src="data:image/jpeg;base64,{{ $logoData }}" alt="Logo">
                 @endif
                 <div>
-                    <div class="shop-name">{{ strtoupper($settings['shop_name'] ?? 'TALLER MECÁNICO') }}</div>
+                    <div class="shop-name">{{ mb_strtoupper($settings['shop_name'] ?? 'TALLER MECÁNICO', 'UTF-8') }}</div>
                     <div class="shop-meta">
                         @if(!empty($settings['shop_address'])){{ $settings['shop_address'] }}@if(!empty($settings['shop_city'])), {{ $settings['shop_city'] }}@endif<br>@endif
                         @if(!empty($settings['shop_phone']))Tel: {{ $settings['shop_phone'] }}@endif

@@ -25,14 +25,43 @@ class Inventory extends Model
 
     protected $fillable = [
         'name', 'sku', 'brand', 'supplier_id', 'category', 'description',
-        'stock', 'min_stock', 'cost', 'sale_price', 'unit', 'active', 'notes',
+        'stock', 'min_stock', 'cost', 'sale_price', 'unit', 'units_per_pack', 'active', 'notes',
     ];
 
     protected $casts = [
         'cost' => 'decimal:2',
         'sale_price' => 'decimal:2',
+        'units_per_pack' => 'integer',
         'active' => 'boolean',
     ];
+
+    // Presentaciones con cantidad fija de unidades sueltas.
+    public const FIXED_PACKS = ['unidad' => 1, 'litro' => 1, 'galon' => 1, 'par' => 2, 'docena' => 12];
+
+    // Presentaciones cuya cantidad se configura por repuesto.
+    public const VARIABLE_PACKS = ['caja', 'ristra'];
+
+    public static function unitKeys(): array
+    {
+        return array_merge(array_keys(self::FIXED_PACKS), self::VARIABLE_PACKS);
+    }
+
+    /**
+     * Unidades sueltas que trae una presentación. Las fijas ignoran lo que
+     * mande el cliente (una docena siempre es 12); caja/ristra usan el valor
+     * configurado; un valor desconocido (dato viejo de texto libre) cuenta como 1.
+     */
+    public static function resolvePackSize(?string $unit, $given = null): int
+    {
+        if ($unit !== null && isset(self::FIXED_PACKS[$unit])) {
+            return self::FIXED_PACKS[$unit];
+        }
+        if (in_array($unit, self::VARIABLE_PACKS, true)) {
+            return max(1, (int) $given);
+        }
+
+        return 1;
+    }
 
     public function supplier()
     {

@@ -34,7 +34,13 @@ class PurchaseOrderService
                     $inv = Inventory::find($item['inventory_id']);
                     $item['item_name'] ??= $inv?->name;
                     $item['item_sku'] ??= $inv?->sku;
-                    $item['unit'] ??= $inv?->unit;
+                    // El empaque de un repuesto existente lo dicta su configuración
+                    // en Inventario, no lo que mande el cliente.
+                    $item['unit'] = $inv?->unit ?? 'unidad';
+                    $item['units_per_pack'] = $inv?->units_per_pack ?? 1;
+                } else {
+                    $item['unit'] = $item['unit'] ?? 'unidad';
+                    $item['units_per_pack'] = Inventory::resolvePackSize($item['unit'], $item['units_per_pack'] ?? null);
                 }
 
                 $item['subtotal'] = round(($item['quantity'] * $item['unit_cost']) - ($item['discount'] ?? 0), 2);
@@ -78,11 +84,17 @@ class PurchaseOrderService
             abort_if($po->items()->count() === 0, 422, 'La orden no tiene productos agregados');
 
             foreach ($po->items as $item) {
+                // La orden se compra en empaques (cajas, docenas...); el stock
+                // se lleva en unidades sueltas, así que se convierte aquí.
+                $packSize = max(1, (int) $item->units_per_pack);
+                $looseUnits = $item->quantity * $packSize;
+                $costPerUnit = round($item->unit_cost / $packSize, 2);
+
                 if ($item->inventory_id) {
                     $inv = Inventory::lockForUpdate()->findOrFail($item->inventory_id);
                     $stockBefore = $inv->stock;
-                    $inv->stock += $item->quantity;
-                    $inv->cost = $item->unit_cost;
+                    $inv->stock += $looseUnits;
+                    $inv->cost = $costPerUnit;
                     $inv->save();
                 } else {
                     $inv = Inventory::create([
@@ -90,15 +102,16 @@ class PurchaseOrderService
                         'sku' => $item->item_sku,
                         'supplier_id' => $po->supplier_id,
                         'unit' => $item->unit ?: 'unidad',
+                        'units_per_pack' => $packSize,
                         'stock' => 0,
                         'min_stock' => 0,
-                        'cost' => $item->unit_cost,
-                        'sale_price' => $item->unit_cost,
+                        'cost' => $costPerUnit,
+                        'sale_price' => $costPerUnit,
                         'active' => true,
                     ]);
                     $item->update(['inventory_id' => $inv->id]);
                     $stockBefore = 0;
-                    $inv->stock = $item->quantity;
+                    $inv->stock = $looseUnits;
                     $inv->save();
                 }
 
@@ -107,11 +120,11 @@ class PurchaseOrderService
                     'purchase_order_id' => $po->id,
                     'user_id' => $user->id,
                     'type' => 'entrada',
-                    'quantity' => $item->quantity,
+                    'quantity' => $looseUnits,
                     'stock_before' => $stockBefore,
                     'stock_after' => $inv->stock,
-                    'unit_cost' => $item->unit_cost,
-                    'reason' => "OC {$po->number}",
+                    'unit_cost' => $costPerUnit,
+                    'reason' => "OC {$po->number}" . ($packSize > 1 ? " ({$item->quantity} × {$packSize})" : ''),
                 ]);
             }
 

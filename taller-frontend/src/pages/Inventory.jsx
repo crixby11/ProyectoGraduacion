@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import { getInventory, createInventoryItem, updateInventoryItem, adjustInventory, getCategories, getInventoryMovements } from '../api/inventory'
 import { getSuppliers } from '../api/suppliers'
 import { fmtMoney } from '../utils/date'
+import { UNIT_OPTIONS, isVariablePack, packLabel, stockUnitLabel } from '../utils/inventory'
 import PageHeader from '../components/ui/PageHeader'
 import SearchInput from '../components/ui/SearchInput'
 import { Table, Pagination } from '../components/ui/Table'
@@ -38,15 +39,16 @@ const CATEGORIES = [
 const schema = z.object({
   name: z.string().min(1, 'Requerido'),
   sku: z.string().optional(),
-  brand: z.string().optional(),
-  supplier_id: z.coerce.number().optional().or(z.literal('')),
-  category: z.string().optional(),
+  brand: z.string().min(1, 'Requerido'),
+  supplier_id: z.coerce.number().min(1, 'Requerido'),
+  category: z.string().min(1, 'Requerido'),
   description: z.string().optional(),
   stock: z.coerce.number().min(0),
   min_stock: z.coerce.number().min(0),
   cost: z.coerce.number().min(0),
   sale_price: z.coerce.number().min(0),
-  unit: z.string().optional(),
+  unit: z.string().min(1, 'Requerido'),
+  units_per_pack: z.coerce.number().int().min(1).optional().or(z.literal('')),
   active: z.boolean().optional(),
 })
 
@@ -105,6 +107,7 @@ export default function Inventory() {
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
   const watchedCategory = watch('category')
+  const watchUnit = watch('unit')
   const {
     register: regAdj, handleSubmit: handleAdj, reset: resetAdj,
     formState: { errors: adjErrors },
@@ -133,7 +136,7 @@ export default function Inventory() {
   })
 
 
-  const openNew = () => { setEditing(null); reset({ stock: 0, min_stock: 5, cost: 0, sale_price: 0, unit: 'unidad', active: true }); setCategoryMode('list'); setModalOpen(true) }
+  const openNew = () => { setEditing(null); reset({ stock: 0, min_stock: 5, cost: 0, sale_price: 0, unit: '', units_per_pack: 1, active: true }); setCategoryMode('list'); setModalOpen(true) }
   const openEdit = (item) => { setEditing(item); reset({ ...item, active: !!item.active }); setCategoryMode(CATEGORIES.includes(item.category) ? 'list' : 'custom'); setModalOpen(true) }
   const closeModal = () => { setModalOpen(false); setEditing(null); reset({}); setCategoryMode('list') }
 
@@ -163,9 +166,10 @@ export default function Inventory() {
         <div className="flex items-center gap-1.5">
           {r.stock <= r.min_stock && <AlertTriangle size={14} className="text-yellow-500" />}
           <span className={`font-semibold ${r.stock <= r.min_stock ? 'text-yellow-600' : 'text-gray-900'}`}>
-            {r.stock} {r.unit}
+            {r.stock} {stockUnitLabel(r.unit)}
           </span>
           <span className="text-xs text-gray-400">(mín: {r.min_stock})</span>
+          {r.units_per_pack > 1 && <span className="text-xs text-gray-400">· se compra por {packLabel(r.unit, r.units_per_pack)}</span>}
         </div>
       ),
     },
@@ -233,18 +237,18 @@ export default function Inventory() {
               <input {...register('sku')} className="input font-mono" />
             </div>
             <div>
-              <label className="label">Marca</label>
-              <input {...register('brand')} className="input" />
+              <label className="label">Marca *</label>
+              <input {...register('brand')} className="input" required />
             </div>
             <div>
-              <label className="label">Proveedor</label>
-              <select {...register('supplier_id')} className="input">
-                <option value="">— Sin proveedor —</option>
+              <label className="label">Proveedor *</label>
+              <select {...register('supplier_id')} className="input" required>
+                <option value="">Seleccionar...</option>
                 {(suppliers ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Categoría</label>
+              <label className="label">Categoría *</label>
               {categoryMode === 'list' ? (
                 <>
                   <select
@@ -258,8 +262,9 @@ export default function Inventory() {
                       }
                     }}
                     className="input"
+                    required
                   >
-                    <option value="">— Sin categoría —</option>
+                    <option value="">Seleccionar...</option>
                     {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     <option value="__other__">✏ Otra categoría...</option>
                   </select>
@@ -267,7 +272,7 @@ export default function Inventory() {
                 </>
               ) : (
                 <div className="flex gap-2">
-                  <input {...register('category')} className="input flex-1" placeholder="Escribe la categoría" />
+                  <input {...register('category')} className="input flex-1" placeholder="Escribe la categoría" required />
                   <button type="button" onClick={() => { setCategoryMode('list'); setValue('category', '') }} className="btn-secondary text-xs whitespace-nowrap">
                     Ver lista
                   </button>
@@ -275,9 +280,19 @@ export default function Inventory() {
               )}
             </div>
             <div>
-              <label className="label">Unidad</label>
-              <input {...register('unit')} className="input" placeholder="unidad, litro, par..." />
+              <label className="label">Unidad de compra *</label>
+              <select {...register('unit')} className="input" required>
+                <option value="">Seleccionar...</option>
+                {UNIT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <p className="mt-1 text-xs text-gray-400">El stock siempre se cuenta en unidades sueltas.</p>
             </div>
+            {isVariablePack(watchUnit) && (
+              <div>
+                <label className="label">Unidades por {watchUnit} *</label>
+                <input {...register('units_per_pack')} type="number" min="1" className="input" placeholder="Ej: 24" required />
+              </div>
+            )}
             <div>
               <label className="label">Stock actual</label>
               <input {...register('stock')} type="number" className="input" />

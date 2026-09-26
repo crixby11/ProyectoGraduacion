@@ -12,6 +12,8 @@ import { getInvoices } from '../api/invoices'
 import PageHeader from '../components/ui/PageHeader'
 import { Table, Pagination } from '../components/ui/Table'
 import Modal from '../components/ui/Modal'
+import CashChange from '../components/ui/CashChange'
+import { paymentPayload } from '../utils/payments'
 
 const schema = z.object({
   invoice_id: z.coerce.number().min(1, 'Seleccione una factura'),
@@ -107,13 +109,15 @@ export default function Payments() {
     enabled: modalOpen,
   })
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { method: 'efectivo', payment_date: today() },
   })
 
+  const selectedInvoice = (pendingInvoices ?? []).find((i) => String(i.id) === String(watch('invoice_id')))
+
   const save = useMutation({
-    mutationFn: (d) => createPayment(d),
+    mutationFn: (d) => createPayment(paymentPayload(d, selectedInvoice?.balance)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['payments-page'] })
       qc.invalidateQueries({ queryKey: ['invoices'] })
@@ -164,7 +168,17 @@ export default function Payments() {
     {
       key: 'amount',
       label: 'Monto',
-      render: (r) => <span className="font-semibold text-green-600">{fmtMoney(r.amount)}</span>,
+      render: (r) => (
+        <div>
+          <span className="font-semibold text-green-600">{fmtMoney(r.amount)}</span>
+          {r.amount_received != null && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              Recibido {fmtMoney(r.amount_received)}
+              {Number(r.change_given) > 0 && <> · Cambio <span className="font-medium text-gray-600">{fmtMoney(r.change_given)}</span></>}
+            </p>
+          )}
+        </div>
+      ),
     },
     { key: 'reference', label: 'Referencia', render: (r) => <span className="text-gray-400 text-xs font-mono">{r.reference ?? '—'}</span> },
   ]
@@ -280,6 +294,7 @@ export default function Payments() {
               {errors.amount && <p className="mt-1 text-xs text-red-500">{errors.amount.message}</p>}
             </div>
           </div>
+          <CashChange method={watch('method')} amount={watch('amount')} balance={selectedInvoice?.balance} />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="label">Fecha *</label>
