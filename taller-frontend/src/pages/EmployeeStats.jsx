@@ -6,9 +6,11 @@ import {
   ResponsiveContainer, LineChart, Line,
 } from 'recharts'
 import { BarChart2, Trophy, Clock, DollarSign, Gift } from 'lucide-react'
-import { getEmployeeStats } from '../api/employees'
+import { getEmployeeStats, downloadEmployeeStatsReport } from '../api/employees'
 import { fmtMoney } from '../utils/date'
 import PageHeader from '../components/ui/PageHeader'
+import ReportMenu from '../components/ui/ReportMenu'
+import { saveBlob, todayStamp } from '../utils/download'
 
 const PERIODS = [
   { value: 'month',   label: 'Este mes' },
@@ -115,6 +117,11 @@ export default function EmployeeStats() {
         icon={BarChart2}
         subtitle="Productividad y rendimiento del equipo"
         action={
+          <div className="flex items-center gap-3">
+          <ReportMenu onGenerate={async (format) => {
+            const res = await downloadEmployeeStatsReport({ period, format })
+            saveBlob(res.data, `reporte-rendimiento-empleados-${todayStamp()}.${format}`)
+          }} />
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
             {PERIODS.map((p) => (
               <button
@@ -129,6 +136,7 @@ export default function EmployeeStats() {
                 {p.label}
               </button>
             ))}
+          </div>
           </div>
         }
       />

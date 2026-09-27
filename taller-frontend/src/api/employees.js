@@ -10,6 +10,7 @@ export const updateEmployeeBonus = (employeeId, bonusId, data) => api.put(`/empl
 
 // Estadísticas
 export const getEmployeeStats = (params) => api.get('/employees/stats', { params })
+export const downloadEmployeeStatsReport = (params) => api.get('/employees/stats/export', { params, responseType: 'blob' })
 export const getEmployeeStat  = (id, params) => api.get(`/employees/${id}/stats`, { params })
 
 // Archivos

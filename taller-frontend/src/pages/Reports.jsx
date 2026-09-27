@@ -4,9 +4,11 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { LineChart as LineChartIcon, DollarSign, ClipboardCheck, Receipt, ArrowUp, ArrowDown } from 'lucide-react'
-import { getPerformanceReport } from '../api/reports'
+import { getPerformanceReport, downloadPerformanceReport } from '../api/reports'
 import { fmtMoney } from '../utils/date'
 import PageHeader from '../components/ui/PageHeader'
+import ReportMenu from '../components/ui/ReportMenu'
+import { saveBlob, todayStamp } from '../utils/download'
 
 const PERIODS = [
   { value: 'month',   label: 'Mensual' },
@@ -117,6 +119,11 @@ export default function Reports() {
         icon={LineChartIcon}
         subtitle="Rendimiento general de ingresos y autos entregados"
         action={
+          <div className="flex items-center gap-3">
+          <ReportMenu onGenerate={async (format) => {
+            const res = await downloadPerformanceReport({ period, format })
+            saveBlob(res.data, `reporte-rendimiento-taller-${todayStamp()}.${format}`)
+          }} />
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
             {PERIODS.map((p) => (
               <button
@@ -131,6 +138,7 @@ export default function Reports() {
                 {p.label}
               </button>
             ))}
+          </div>
           </div>
         }
       />

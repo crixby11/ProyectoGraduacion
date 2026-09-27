@@ -43,6 +43,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // Reportes
     Route::get('reports/performance', [ReportController::class, 'performance']);
+    Route::get('reports/performance/export', [ReportController::class, 'exportPerformance']);
 
     // Clientes
     Route::apiResource('customers', CustomerController::class);
@@ -52,6 +53,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // Empleados — rutas estáticas ANTES del apiResource para evitar conflicto con {employee}
     Route::get('employees/stats', [EmployeeStatsController::class, 'index']);
+    Route::get('employees/stats/export', [EmployeeStatsController::class, 'export']);
     Route::apiResource('employees', EmployeeController::class);
     Route::post('employees/{employee}/weekly-reminder', [EmployeeController::class, 'sendWeeklyReminder']);
     Route::post('employees/{employee}/bonuses', [EmployeeBonusController::class, 'store']);
