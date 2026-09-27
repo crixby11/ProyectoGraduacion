@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,6 +7,7 @@ import { Plus, Edit2, TrendingUp, AlertTriangle, Clock, ArrowDownCircle, ArrowUp
 import toast from 'react-hot-toast'
 import { getInventory, createInventoryItem, updateInventoryItem, adjustInventory, getCategories, getInventoryMovements } from '../api/inventory'
 import { getSuppliers } from '../api/suppliers'
+import SupplierQuickAdd from '../components/SupplierQuickAdd'
 import { fmtMoney } from '../utils/date'
 import { UNIT_OPTIONS, isVariablePack, packLabel, stockUnitLabel } from '../utils/inventory'
 import PageHeader from '../components/ui/PageHeader'
@@ -108,6 +109,25 @@ export default function Inventory() {
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
   const watchedCategory = watch('category')
   const watchUnit = watch('unit')
+  const [supplierModal, setSupplierModal] = useState(false)
+  const supplierField = register('supplier_id')
+
+  // Proveedor recién creado desde el formulario: se agrega a la lista y, cuando la
+  // opción ya existe en el select, queda seleccionado (el select no es controlado).
+  const pendingSupplierId = useRef(null)
+  const onSupplierCreated = (created) => {
+    pendingSupplierId.current = created.id
+    qc.setQueryData(['suppliers-all'], (old) => [...(old ?? []), created].sort((a, b) => a.name.localeCompare(b.name)))
+    qc.invalidateQueries({ queryKey: ['suppliers'] })
+    setSupplierModal(false)
+  }
+
+  useEffect(() => {
+    if (pendingSupplierId.current && suppliers?.some((s) => s.id === pendingSupplierId.current)) {
+      setValue('supplier_id', String(pendingSupplierId.current), { shouldValidate: true })
+      pendingSupplierId.current = null
+    }
+  }, [suppliers, setValue])
   const {
     register: regAdj, handleSubmit: handleAdj, reset: resetAdj,
     formState: { errors: adjErrors },
@@ -242,9 +262,22 @@ export default function Inventory() {
             </div>
             <div>
               <label className="label">Proveedor *</label>
-              <select {...register('supplier_id')} className="input" required>
+              <select
+                {...supplierField}
+                onChange={(e) => {
+                  if (e.target.value === '__new__') {
+                    setValue('supplier_id', '')
+                    setSupplierModal(true)
+                  } else {
+                    supplierField.onChange(e)
+                  }
+                }}
+                className="input"
+                required
+              >
                 <option value="">Seleccionar...</option>
                 {(suppliers ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                <option value="__new__">+ Añadir proveedor...</option>
               </select>
             </div>
             <div>
@@ -426,6 +459,8 @@ export default function Inventory() {
           </div>
         </form>
       </Modal>
+
+      <SupplierQuickAdd open={supplierModal} onClose={() => setSupplierModal(false)} onCreated={onSupplierCreated} />
 
     </div>
   )

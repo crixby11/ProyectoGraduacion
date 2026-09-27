@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Plus, Edit2, Eye, Truck, Phone, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -11,19 +10,8 @@ import PageHeader from '../components/ui/PageHeader'
 import SearchInput from '../components/ui/SearchInput'
 import { Table, Pagination } from '../components/ui/Table'
 import Modal from '../components/ui/Modal'
-import { isValidPhone, fmtPhone } from '../utils/hn'
-
-const schema = z.object({
-  name: z.string().min(1, 'Requerido'),
-  contact_name: z.string().optional(),
-  phone: z.string().min(1, 'El teléfono es requerido').refine(isValidPhone, 'Teléfono inválido (8 dígitos, ej: 9999-9999)'),
-  email: z.string().email('Correo inválido').optional().or(z.literal('')),
-  address: z.string().optional(),
-  rtn: z.string().optional(),
-  notes: z.string().optional(),
-  active: z.boolean().optional(),
-})
-
+import { fmtPhone } from '../utils/hn'
+import { supplierSchema as schema } from '../utils/supplierSchema'
 
 export default function Suppliers() {
   const qc = useQueryClient()
