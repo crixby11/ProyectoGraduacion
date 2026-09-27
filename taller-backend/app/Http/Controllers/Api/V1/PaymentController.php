@@ -105,13 +105,4 @@ class PaymentController extends Controller
     {
         return response()->json($payment->load(['invoice', 'workOrder', 'customer', 'user:id,name']));
     }
-
-    public function destroy(Payment $payment)
-    {
-        $invoice = $payment->invoice;
-        $payment->delete();
-        $invoice->recalculate();
-
-        return response()->json(['message' => 'Pago eliminado']);
-    }
 }

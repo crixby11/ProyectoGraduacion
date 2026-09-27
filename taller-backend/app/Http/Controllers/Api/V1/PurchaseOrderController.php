@@ -58,6 +58,12 @@ class PurchaseOrderController extends Controller
             'items.*.inventory_id' => 'nullable|exists:inventory,id',
             'items.*.item_name' => 'required_without:items.*.inventory_id|string|max:150',
             'items.*.item_sku' => 'nullable|string|max:60',
+            // Un producto nuevo (sin inventory_id) se crea en Inventario al recibir la
+            // orden, así que debe traer los mismos datos obligatorios que Inventario.
+            'items.*.brand' => 'required_without:items.*.inventory_id|nullable|string|max:60',
+            'items.*.category' => 'required_without:items.*.inventory_id|nullable|string|max:80',
+            'items.*.sale_price' => 'required_without:items.*.inventory_id|nullable|numeric|gt:0',
+            'items.*.min_stock' => 'nullable|integer|min:0',
             'items.*.unit' => ['required_without:items.*.inventory_id', 'nullable', Rule::in(Inventory::unitKeys())],
             'items.*.units_per_pack' => 'nullable|integer|min:1|max:100000',
             'items.*.quantity' => 'required|integer|min:1',
@@ -68,6 +74,17 @@ class PurchaseOrderController extends Controller
 
         $items = $data['items'];
         unset($data['items']);
+
+        // Un proveedor tiene sus propios repuestos: solo se pueden comprar los de este proveedor
+        // (un repuesto de otro proveedor se cambia desde su ficha en Inventario).
+        $foreign = Inventory::whereIn('id', collect($items)->pluck('inventory_id')->filter())
+            ->where(fn ($q) => $q->where('supplier_id', '!=', $data['supplier_id'])->orWhereNull('supplier_id'))
+            ->pluck('name');
+        if ($foreign->isNotEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'items' => ['Estos repuestos no pertenecen al proveedor de la orden: ' . $foreign->implode(', ')],
+            ]);
+        }
 
         $po = $this->purchaseOrderService->create($data, $items);
 

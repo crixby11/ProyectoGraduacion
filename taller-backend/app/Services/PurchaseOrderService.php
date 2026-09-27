@@ -41,6 +41,7 @@ class PurchaseOrderService
                 } else {
                     $item['unit'] = $item['unit'] ?? 'unidad';
                     $item['units_per_pack'] = Inventory::resolvePackSize($item['unit'], $item['units_per_pack'] ?? null);
+                    $item['min_stock'] = $item['min_stock'] ?? 5;
                 }
 
                 $item['subtotal'] = round(($item['quantity'] * $item['unit_cost']) - ($item['discount'] ?? 0), 2);
@@ -100,13 +101,15 @@ class PurchaseOrderService
                     $inv = Inventory::create([
                         'name' => $item->item_name,
                         'sku' => $item->item_sku,
+                        'brand' => $item->brand,
+                        'category' => $item->category,
                         'supplier_id' => $po->supplier_id,
                         'unit' => $item->unit ?: 'unidad',
                         'units_per_pack' => $packSize,
                         'stock' => 0,
-                        'min_stock' => 0,
+                        'min_stock' => $item->min_stock ?? 5,
                         'cost' => $costPerUnit,
-                        'sale_price' => $costPerUnit,
+                        'sale_price' => $item->sale_price ?? $costPerUnit,
                         'active' => true,
                     ]);
                     $item->update(['inventory_id' => $inv->id]);

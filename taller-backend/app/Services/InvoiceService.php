@@ -8,6 +8,7 @@ use App\Models\WorkOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class InvoiceService
 {
@@ -95,6 +96,25 @@ class InvoiceService
      * en Ajustes. No hay un formato interno alterno: este es el número real
      * de la factura, el mismo que se usaba en el talonario físico.
      */
+    /**
+     * Último correlativo ya emitido dentro de un rango (mismo prefijo y largo), contando
+     * también facturas eliminadas porque el número sigue ocupado en el índice único.
+     */
+    public static function lastUsedCorrelativo(string $rangeStart): int
+    {
+        $parts = explode('-', $rangeStart);
+        $length = strlen(end($parts));
+        $prefix = implode('-', array_slice($parts, 0, -1));
+
+        $last = Invoice::withTrashed()
+            ->where('number', 'like', $prefix . '-%')
+            ->whereRaw('LENGTH(number) = ?', [strlen($prefix) + 1 + $length])
+            ->orderByDesc('number')
+            ->value('number');
+
+        return $last ? (int) Str::afterLast($last, '-') : 0;
+    }
+
     private function generateNumber(): string
     {
         $rangeStart = Setting::get('invoice_range_start');
@@ -119,8 +139,13 @@ class InvoiceService
         $endParts = explode('-', $rangeEnd);
         $endCorrelativo = (int) end($endParts);
 
-        $nextSetting = Setting::get('invoice_next_correlativo');
-        $next = $nextSetting !== '' ? (int) $nextSetting : $startCorrelativo;
+        // El contador guardado en Ajustes puede quedar desfasado (se edita a mano). Nunca se
+        // reutiliza un número ya emitido: se toma el mayor entre el contador, el inicio del
+        // rango y el último número realmente usado + 1. El lock evita que dos facturas
+        // simultáneas lean el mismo contador.
+        $counterRow = Setting::where('key', 'invoice_next_correlativo')->lockForUpdate()->first();
+        $counter = (int) ($counterRow?->value ?? 0);
+        $next = max($counter, $startCorrelativo, self::lastUsedCorrelativo($rangeStart) + 1);
 
         abort_if(
             $next > $endCorrelativo,

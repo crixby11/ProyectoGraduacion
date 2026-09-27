@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Inventory;
 use App\Models\Invoice;
 use App\Models\Service;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
@@ -17,6 +18,8 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->seedExampleSettings();
+
         // ── Entidades existentes ─────────────────────────────────────────────
         $juan    = Customer::where('phone', '70001111')->first();
         $maria   = Customer::where('phone', '70002222')->first();
@@ -109,7 +112,7 @@ class DemoDataSeeder extends Seeder
             ]);
         }
 
-        $fac1 = Invoice::updateOrCreate(['number' => 'FAC-2026-001'], [
+        $fac1 = Invoice::updateOrCreate(['number' => '000-001-01-00000001'], [
             'work_order_id'     => $wo1->id,
             'customer_id'       => $juan->id,
             'status'            => 'pagada',
@@ -212,7 +215,7 @@ class DemoDataSeeder extends Seeder
             ]);
         }
 
-        $fac2 = Invoice::updateOrCreate(['number' => 'FAC-2026-002'], [
+        $fac2 = Invoice::updateOrCreate(['number' => '000-001-01-00000002'], [
             'work_order_id'     => $wo2->id,
             'customer_id'       => $maria->id,
             'status'            => 'parcial',
@@ -306,7 +309,7 @@ class DemoDataSeeder extends Seeder
             ]);
         }
 
-        Invoice::updateOrCreate(['number' => 'FAC-2026-003'], [
+        Invoice::updateOrCreate(['number' => '000-001-01-00000003'], [
             'work_order_id'     => $wo3->id,
             'customer_id'       => $roberto->id,
             'status'            => 'pendiente',
@@ -505,5 +508,34 @@ class DemoDataSeeder extends Seeder
         }
 
         $this->command->info('Demo data insertado: 6 OTs, 3 facturas, 2 pagos, 5 citas.');
+    }
+
+    /**
+     * Datos ficticios del taller y del CAI para que las facturas de ejemplo (numeradas en formato
+     * CAI) y el PDF salgan completos. Solo crea lo que falta: nunca pisa la configuración real.
+     */
+    private function seedExampleSettings(): void
+    {
+        $example = [
+            'shop_name' => 'Taller Hermanos Juarez',
+            'shop_address' => 'Boulevard del Ejemplo, Col. Modelo',
+            'shop_phone' => '9999-0000',
+            'shop_email' => 'contacto@ejemplo.com',
+            'shop_rtn' => '00000000000000',
+            'shop_city' => 'Tegucigalpa',
+            'shop_owner' => 'Nombre del Propietario',
+            'invoice_notes' => 'Gracias por su preferencia.',
+            'invoice_cai' => 'AAAAAA-BBBBBB-CCCCCC-DDDDDD-EEEEEE-FF',
+            'invoice_range_start' => '000-001-01-00000001',
+            'invoice_range_end' => '000-001-01-00001000',
+            'invoice_deadline' => now()->addYear()->toDateString(),
+            'invoice_next_correlativo' => '4',
+        ];
+
+        foreach ($example as $key => $value) {
+            if (! Setting::where('key', $key)->exists()) {
+                Setting::create(['key' => $key, 'value' => $value]);
+            }
+        }
     }
 }

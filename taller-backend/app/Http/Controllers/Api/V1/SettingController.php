@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\InvoiceService;
 use Illuminate\Http\Request;
 
 class SettingController extends Controller
@@ -36,6 +37,19 @@ class SettingController extends Controller
             'invoice_deadline'    => 'nullable|date',
             'invoice_next_correlativo' => 'nullable|integer|min:1',
         ]);
+
+        // El próximo correlativo no puede ser un número ya emitido (causaba facturas duplicadas).
+        if (! empty($data['invoice_next_correlativo'])) {
+            $rangeStart = $data['invoice_range_start'] ?? Setting::get('invoice_range_start');
+            if ($rangeStart) {
+                $lastUsed = InvoiceService::lastUsedCorrelativo($rangeStart);
+                if ((int) $data['invoice_next_correlativo'] <= $lastUsed) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'invoice_next_correlativo' => ["El próximo correlativo debe ser mayor a {$lastUsed}: ya hay facturas emitidas hasta ese número."],
+                    ]);
+                }
+            }
+        }
 
         foreach ($data as $key => $value) {
             if (in_array($key, $allowed)) {

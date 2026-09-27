@@ -5,9 +5,17 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SupplierController extends Controller
 {
+    // La comparación usa la collation de MySQL (sin distinguir mayúsculas ni acentos):
+    // "Repuestos García" y "repuestos garcia" cuentan como el mismo proveedor.
+    private const DUPLICATE_MESSAGES = [
+        'name.unique' => 'Ya existe un proveedor con ese nombre.',
+        'rtn.unique' => 'Ya existe un proveedor con ese RTN.',
+    ];
+
     public function index(Request $request)
     {
         $query = Supplier::query()->withCount('inventory');
@@ -32,14 +40,14 @@ class SupplierController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'         => 'required|string|max:150',
+            'name'         => ['required', 'string', 'max:150', Rule::unique('suppliers', 'name')->whereNull('deleted_at')],
             'contact_name' => 'nullable|string|max:150',
             'phone'        => 'required|string|max:20',
             'email'        => 'nullable|email|max:150',
             'address'      => 'nullable|string|max:255',
-            'rtn'          => 'nullable|string|max:30',
+            'rtn'          => ['nullable', 'string', 'max:30', Rule::unique('suppliers', 'rtn')->whereNull('deleted_at')],
             'notes'        => 'nullable|string',
-        ]);
+        ], self::DUPLICATE_MESSAGES);
 
         return response()->json(Supplier::create($data), 201);
     }
@@ -60,15 +68,15 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier)
     {
         $data = $request->validate([
-            'name'         => 'sometimes|required|string|max:150',
+            'name'         => ['sometimes', 'required', 'string', 'max:150', Rule::unique('suppliers', 'name')->ignore($supplier->id)->whereNull('deleted_at')],
             'contact_name' => 'nullable|string|max:150',
             'phone'        => 'sometimes|required|string|max:20',
             'email'        => 'nullable|email|max:150',
             'address'      => 'nullable|string|max:255',
-            'rtn'          => 'nullable|string|max:30',
+            'rtn'          => ['nullable', 'string', 'max:30', Rule::unique('suppliers', 'rtn')->ignore($supplier->id)->whereNull('deleted_at')],
             'notes'        => 'nullable|string',
             'active'       => 'nullable|boolean',
-        ]);
+        ], self::DUPLICATE_MESSAGES);
 
         $supplier->update($data);
 

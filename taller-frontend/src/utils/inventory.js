@@ -11,6 +11,29 @@ export const UNIT_OPTIONS = [
   { value: 'galon', label: 'Galón', fixed: 1 },
 ]
 
+// Categorías sugeridas de repuestos (Inventario y productos nuevos en órdenes de compra).
+export const CATEGORIES = [
+  'Aceites y lubricantes',
+  'Filtros',
+  'Frenos',
+  'Suspensión',
+  'Motor',
+  'Transmisión',
+  'Sistema eléctrico',
+  'Baterías',
+  'Correas y cadenas',
+  'Refrigeración',
+  'Dirección',
+  'Sistema de escape',
+  'Encendido',
+  'Sistema de combustible',
+  'Llantas y rines',
+  'Carrocería',
+  'Iluminación',
+  'Aire acondicionado',
+  'Rodamientos y retenes',
+]
+
 const NAMES = { unidad: 'Unidad', par: 'Par', docena: 'Docena', caja: 'Caja', ristra: 'Ristra', litro: 'Litro', galon: 'Galón' }
 
 export const isVariablePack = (unit) => UNIT_OPTIONS.find((o) => o.value === unit)?.variable === true

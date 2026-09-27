@@ -119,8 +119,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf']);
     Route::get('invoices/{invoice}/whatsapp', [InvoiceController::class, 'whatsappLink']);
 
-    // Pagos
-    Route::apiResource('payments', PaymentController::class)->except(['update']);
+    // Pagos — sin update ni destroy: un pago registrado es un registro financiero y no se edita
+    // ni se borra (no hay borrado lógico en pagos; una corrección futura sería una anulación auditada).
+    Route::apiResource('payments', PaymentController::class)->except(['update', 'destroy']);
 
     // Citas / Calendario
     Route::apiResource('appointments', AppointmentController::class);

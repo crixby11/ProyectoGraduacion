@@ -9,33 +9,11 @@ import { getInventory, createInventoryItem, updateInventoryItem, adjustInventory
 import { getSuppliers } from '../api/suppliers'
 import SupplierQuickAdd from '../components/SupplierQuickAdd'
 import { fmtMoney } from '../utils/date'
-import { UNIT_OPTIONS, isVariablePack, packLabel, stockUnitLabel } from '../utils/inventory'
+import { UNIT_OPTIONS, CATEGORIES, isVariablePack, packLabel, stockUnitLabel } from '../utils/inventory'
 import PageHeader from '../components/ui/PageHeader'
 import SearchInput from '../components/ui/SearchInput'
 import { Table, Pagination } from '../components/ui/Table'
 import Modal from '../components/ui/Modal'
-
-const CATEGORIES = [
-  'Aceites y lubricantes',
-  'Filtros',
-  'Frenos',
-  'Suspensión',
-  'Motor',
-  'Transmisión',
-  'Sistema eléctrico',
-  'Baterías',
-  'Correas y cadenas',
-  'Refrigeración',
-  'Dirección',
-  'Sistema de escape',
-  'Encendido',
-  'Sistema de combustible',
-  'Llantas y rines',
-  'Carrocería',
-  'Iluminación',
-  'Aire acondicionado',
-  'Rodamientos y retenes',
-]
 
 const schema = z.object({
   name: z.string().min(1, 'Requerido'),

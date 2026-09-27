@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -8,8 +8,10 @@ import { createPurchaseOrder } from '../../api/purchaseOrders'
 import { getSuppliers } from '../../api/suppliers'
 import { getInventory } from '../../api/inventory'
 import Modal from '../../components/ui/Modal'
+import ConfirmDialog from '../../components/ui/ConfirmDialog'
+import SupplierQuickAdd from '../../components/SupplierQuickAdd'
 import { fmtMoney } from '../../utils/date'
-import { UNIT_OPTIONS, isVariablePack, packSize, packLabel, stockUnitLabel } from '../../utils/inventory'
+import { UNIT_OPTIONS, CATEGORIES, isVariablePack, packSize, packLabel, stockUnitLabel } from '../../utils/inventory'
 
 const PAYMENT_TERMS = ['Contado', 'Crédito 15 días', 'Crédito 30 días', 'Crédito 45 días', 'Crédito 60 días']
 
@@ -40,9 +42,14 @@ export default function NewPurchaseOrder() {
   const [editingIndex, setEditingIndex] = useState(null)
   const [saving, setSaving] = useState(false)
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: { order_date: new Date().toISOString().slice(0, 10) },
   })
+  const supplierId = watch('supplier_id') ?? ''
+  const supplierField = register('supplier_id', { required: true })
+  const [supplierModal, setSupplierModal] = useState(false)
+  const [pendingSupplier, setPendingSupplier] = useState(null) // cambio de proveedor por confirmar
+  const pendingCreatedId = useRef(null)
 
   const { data: suppliers } = useQuery({ queryKey: ['suppliers-all'], queryFn: () => getSuppliers({ per_page: 500, active: true }).then((r) => r.data.data) })
   const { data: inventoryItems } = useQuery({ queryKey: ['inventory-all'], queryFn: () => getInventory({ per_page: 500 }).then((r) => r.data.data) })
@@ -50,6 +57,35 @@ export default function NewPurchaseOrder() {
   const { register: regItem, handleSubmit: handleItem, reset: resetItem, watch: watchItem } = useForm({
     defaultValues: { tax_type: 'gravado_15', quantity: 1, discount: 0 },
   })
+  // Un proveedor tiene sus propios repuestos: solo se ofrecen los de este proveedor.
+  const supplierItems = (inventoryItems ?? []).filter((i) => String(i.supplier_id) === String(supplierId))
+
+  // Cambiar de proveedor con productos ya agregados los descarta: se pide confirmación.
+  const requestSupplierChange = (newId) => {
+    if (items.length > 0 && String(newId) !== String(supplierId)) setPendingSupplier(String(newId))
+    else setValue('supplier_id', String(newId), { shouldValidate: true })
+  }
+  const confirmSupplierChange = () => {
+    setItems([])
+    setValue('supplier_id', pendingSupplier, { shouldValidate: true })
+    setPendingSupplier(null)
+  }
+
+  // Proveedor recién creado: se agrega a la lista y se selecciona cuando la opción ya existe.
+  const onSupplierCreated = (created) => {
+    pendingCreatedId.current = created.id
+    qc.setQueryData(['suppliers-all'], (old) => [...(old ?? []), created].sort((a, b) => a.name.localeCompare(b.name)))
+    qc.invalidateQueries({ queryKey: ['suppliers'] })
+    setSupplierModal(false)
+  }
+  useEffect(() => {
+    if (pendingCreatedId.current && suppliers?.some((s) => s.id === pendingCreatedId.current)) {
+      const id = pendingCreatedId.current
+      pendingCreatedId.current = null
+      requestSupplierChange(id)
+    }
+  })
+
   const selectedInvId = watchItem('inventory_id')
   const selectedInv = selectedInvId && selectedInvId !== 'manual'
     ? inventoryItems?.find((i) => String(i.id) === String(selectedInvId))
@@ -62,16 +98,21 @@ export default function NewPurchaseOrder() {
     ? { unit: selectedInv.unit, perPack: selectedInv.units_per_pack }
     : { unit: manualUnit, perPack: packSize(manualUnit, manualPack) }
   const linePackSize = packSize(linePack.unit, linePack.perPack)
+  // Producto nuevo: costo por unidad suelta (precio del empaque / unidades) y margen sobre el precio de venta
+  const watchCost = Number(watchItem('unit_cost') || 0)
+  const watchSale = Number(watchItem('sale_price_manual') || 0)
+  const costPerUnit = linePackSize > 0 ? watchCost / linePackSize : 0
 
   const totals = computeTotals(items)
 
-  const openAdd = () => { setEditingIndex(null); resetItem({ tax_type: 'gravado_15', quantity: 1, discount: 0, unit_manual: '' }); setItemModal(true) }
+  const openAdd = () => { setEditingIndex(null); resetItem({ tax_type: 'gravado_15', quantity: 1, discount: 0, unit_manual: '', min_stock_manual: 5 }); setItemModal(true) }
   const openEdit = (idx) => {
     const it = items[idx]
     setEditingIndex(idx)
     resetItem({
       inventory_id: it.inventory_id ? String(it.inventory_id) : 'manual',
       item_name_manual: it.item_name, item_sku_manual: it.item_sku, unit_manual: it.unit ?? 'unidad', pack_manual: it.units_per_pack,
+      brand_manual: it.brand, category_manual: it.category, sale_price_manual: it.sale_price, min_stock_manual: it.min_stock ?? 5,
       quantity: it.quantity, unit_cost: it.unit_cost, discount: it.discount, tax_type: it.tax_type,
     })
     setItemModal(true)
@@ -86,6 +127,10 @@ export default function NewPurchaseOrder() {
       item_sku: inv?.sku ?? d.item_sku_manual ?? null,
       unit: inv?.unit ?? d.unit_manual ?? 'unidad',
       units_per_pack: inv ? inv.units_per_pack : packSize(d.unit_manual ?? 'unidad', d.pack_manual),
+      brand: inv ? null : d.brand_manual,
+      category: inv ? null : d.category_manual,
+      sale_price: inv ? null : Number(d.sale_price_manual),
+      min_stock: inv ? null : Number(d.min_stock_manual ?? 5),
       quantity: Number(d.quantity),
       unit_cost: Number(d.unit_cost),
       discount: Number(d.discount ?? 0),
@@ -118,6 +163,10 @@ export default function NewPurchaseOrder() {
           item_sku: it.item_sku ?? undefined,
           unit: it.unit ?? undefined,
           units_per_pack: it.units_per_pack ?? undefined,
+          brand: it.brand ?? undefined,
+          category: it.category ?? undefined,
+          sale_price: it.sale_price ?? undefined,
+          min_stock: it.min_stock ?? undefined,
           quantity: it.quantity,
           unit_cost: it.unit_cost,
           discount: it.discount,
@@ -152,9 +201,26 @@ export default function NewPurchaseOrder() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Proveedor *</label>
-              <select {...register('supplier_id', { required: true })} className="input" required>
+              <select
+                {...supplierField}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val === '__new__') {
+                    setValue('supplier_id', supplierId)
+                    setSupplierModal(true)
+                  } else if (items.length > 0 && val !== supplierId) {
+                    setValue('supplier_id', supplierId)
+                    setPendingSupplier(val)
+                  } else {
+                    supplierField.onChange(e)
+                  }
+                }}
+                className="input"
+                required
+              >
                 <option value="">Seleccionar...</option>
                 {(suppliers ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                <option value="__new__">+ Añadir proveedor...</option>
               </select>
               {errors.supplier_id && <p className="mt-1 text-xs text-red-500">Selecciona un proveedor</p>}
             </div>
@@ -185,12 +251,20 @@ export default function NewPurchaseOrder() {
         <div className="card p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-gray-800">Productos ({items.length})</h3>
-            <button type="button" onClick={openAdd} className="btn-secondary text-xs py-1.5">
+            <button
+              type="button"
+              onClick={openAdd}
+              disabled={!supplierId}
+              title={!supplierId ? 'Primero elige el proveedor' : undefined}
+              className="btn-secondary text-xs py-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Plus size={14} /> Agregar producto
             </button>
           </div>
           {items.length === 0 ? (
-            <p className="text-sm text-gray-400 py-6 text-center">Agrega los productos de la factura antes de guardar la orden</p>
+            <p className="text-sm text-gray-400 py-6 text-center">
+              {supplierId ? 'Agrega los productos de la factura antes de guardar la orden' : 'Primero elige el proveedor para poder agregar productos'}
+            </p>
           ) : (
             <table className="w-full text-sm">
               <thead>
@@ -207,7 +281,11 @@ export default function NewPurchaseOrder() {
               <tbody>
                 {items.map((it, idx) => (
                   <tr key={idx} className="border-b border-gray-50 group">
-                    <td className="py-1.5">{it.item_name}<br /><span className="text-xs text-gray-400 font-mono">{it.item_sku}</span></td>
+                    <td className="py-1.5">
+                      {it.item_name}
+                      {!it.inventory_id && <span className="ml-1.5 text-[10px] font-semibold text-blue-600 bg-blue-50 rounded px-1 py-0.5 align-middle">NUEVO</span>}
+                      <br /><span className="text-xs text-gray-400 font-mono">{it.item_sku}</span>
+                    </td>
                     <td className="text-right">
                       {it.quantity} {packLabel(it.unit, it.units_per_pack)}
                       {it.units_per_pack > 1 && <span className="block text-xs text-gray-400">= {it.quantity * it.units_per_pack} unidades</span>}
@@ -278,17 +356,20 @@ export default function NewPurchaseOrder() {
       </form>
 
       {/* Modal agregar/editar producto (local, antes de guardar) */}
-      <Modal open={itemModal} onClose={() => setItemModal(false)} title={editingIndex !== null ? 'Editar producto' : 'Agregar producto'} size="sm">
+      <Modal open={itemModal} onClose={() => setItemModal(false)} title={editingIndex !== null ? 'Editar producto' : 'Agregar producto'} size="md">
         <form onSubmit={handleItem(onItemSubmit)} className="space-y-4">
           <div>
             <label className="label">Producto *</label>
             <select {...regItem('inventory_id')} className="input" required>
               <option value="">— Seleccionar producto —</option>
-              {(inventoryItems ?? []).map((i) => (
+              {supplierItems.map((i) => (
                 <option key={i.id} value={i.id}>{i.name}{i.sku ? ` [${i.sku}]` : ''} — Stock: {i.stock} {stockUnitLabel(i.unit)}</option>
               ))}
               <option value="manual">Producto nuevo (no está en inventario)</option>
             </select>
+            {supplierItems.length === 0 && (
+              <p className="mt-1.5 text-xs text-gray-500">Este proveedor aún no tiene productos registrados: usa "Producto nuevo".</p>
+            )}
             {selectedInv && (
               <p className={`mt-1.5 text-xs ${Number(selectedInv.stock) <= Number(selectedInv.min_stock) ? 'text-amber-600 font-medium' : 'text-gray-500'}`}>
                 Stock actual: {selectedInv.stock} {stockUnitLabel(selectedInv.unit)} · Mínimo: {selectedInv.min_stock}
@@ -325,6 +406,31 @@ export default function NewPurchaseOrder() {
                   <input {...regItem('pack_manual')} type="number" min="1" className="input" placeholder="Ej: 24" required />
                 </div>
               )}
+              <div>
+                <label className="label">Marca *</label>
+                <input {...regItem('brand_manual')} className="input" required />
+              </div>
+              <div>
+                <label className="label">Categoría *</label>
+                <input {...regItem('category_manual')} list="po-categories" className="input" placeholder="Elige o escribe" required />
+                <datalist id="po-categories">
+                  {CATEGORIES.map((c) => <option key={c} value={c} />)}
+                </datalist>
+              </div>
+              <div>
+                <label className="label">Precio de venta por unidad (L) *</label>
+                <input {...regItem('sale_price_manual')} type="number" step="0.01" min="0.01" className="input" required />
+              </div>
+              <div>
+                <label className="label">Stock mínimo</label>
+                <input {...regItem('min_stock_manual')} type="number" min="0" className="input" />
+              </div>
+              {watchCost > 0 && (
+                <p className="col-span-2 text-xs text-gray-500 -mt-1">
+                  Costo por unidad: <b>{fmtMoney(costPerUnit)}</b>
+                  {watchSale > 0 && costPerUnit > 0 && <> · Ganancia: <b className={watchSale > costPerUnit ? 'text-green-600' : 'text-red-600'}>{(((watchSale - costPerUnit) / costPerUnit) * 100).toFixed(0)}%</b></>}
+                </p>
+              )}
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
@@ -355,6 +461,18 @@ export default function NewPurchaseOrder() {
           </div>
         </form>
       </Modal>
+
+      <SupplierQuickAdd open={supplierModal} onClose={() => setSupplierModal(false)} onCreated={onSupplierCreated} />
+
+      <ConfirmDialog
+        open={!!pendingSupplier}
+        onClose={() => setPendingSupplier(null)}
+        title="¿Cambiar de proveedor?"
+        message={`Cada proveedor tiene sus propios repuestos: se quitarán los ${items.length} producto(s) ya agregados a esta orden.`}
+        confirmText="Sí, cambiar"
+        confirmClass="btn-primary"
+        onConfirm={confirmSupplierChange}
+      />
     </div>
   )
 }
