@@ -22,7 +22,7 @@ class SendWhatsAppReminder implements ShouldQueue
             return;
         }
 
-        $date = $this->appointment->start_at->format('d/m/Y \a \l\a\s H:i');
+        $date = \Carbon\Carbon::parse($this->appointment->start_at)->format('d/m/Y \a \l\a\s H:i');
         $message = "Hola {$this->appointment->customer_name},\n" .
             "Le recordamos su cita en el Taller el {$date}.\n" .
             "Motivo: {$this->appointment->title}\n" .

@@ -50,8 +50,9 @@ class WhatsAppService
     public function appointmentReminderLink(Appointment $appointment): string
     {
         $phone = preg_replace('/\D/', '', $appointment->customer_phone ?? '');
+        abort_if(! $phone, 422, 'La cita no tiene un número de teléfono registrado');
 
-        $date = $appointment->start_at->format('d/m/Y \a \l\a\s H:i');
+        $date = Carbon::parse($appointment->start_at)->format('d/m/Y \a \l\a\s H:i');
         $message = urlencode(
             "Hola {$appointment->customer_name},\n" .
             "Le recordamos su cita en el Taller el {$date}.\n" .
