@@ -113,7 +113,7 @@ export default function Appointments() {
   const mutReminder = useMutation({
     mutationFn: id => sendReminder(id),
     onSuccess:  res => { window.open(res.data.url, '_blank'); toast.success('Abriendo WhatsApp...') },
-    onError:    ()  => toast.error('No se pudo generar el enlace'),
+    onError:    e   => toast.error(e.response?.data?.message ?? 'No se pudo generar el enlace'),
   })
 
   // ── Filtro local de búsqueda ───────────────────────────────────────────

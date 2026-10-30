@@ -18,7 +18,7 @@ class Kernel extends ConsoleKernel
 
             \App\Models\Appointment::whereDate('start_at', $tomorrow)
                 ->where('reminder_sent', false)
-                ->whereNotNull('customer_phone')
+                ->where(fn ($q) => $q->whereNotNull('customer_phone')->orWhereHas('customer', fn ($c) => $c->whereNotNull('phone')))
                 ->whereIn('status', ['programada', 'confirmada'])
                 ->get()
                 ->each(fn($apt) => \App\Jobs\SendWhatsAppReminder::dispatch($apt));

@@ -18,17 +18,21 @@ class SendWhatsAppReminder implements ShouldQueue
 
     public function handle(WhatsAppService $whatsApp): void
     {
-        if ($this->appointment->reminder_sent || ! $this->appointment->customer_phone) {
+        $this->appointment->loadMissing('customer');
+        $phone = $this->appointment->customer_phone ?: $this->appointment->customer?->phone;
+        $name = $this->appointment->customer_name ?: $this->appointment->customer?->name;
+
+        if ($this->appointment->reminder_sent || ! $phone) {
             return;
         }
 
         $date = \Carbon\Carbon::parse($this->appointment->start_at)->format('d/m/Y \a \l\a\s H:i');
-        $message = "Hola {$this->appointment->customer_name},\n" .
+        $message = "Hola {$name},\n" .
             "Le recordamos su cita en el Taller el {$date}.\n" .
             "Motivo: {$this->appointment->title}\n" .
             "Si necesita reprogramar contáctenos. ¡Gracias!";
 
-        $sent = $whatsApp->sendViaTwilio($this->appointment->customer_phone, $message);
+        $sent = $whatsApp->sendViaTwilio($phone, $message);
 
         if ($sent) {
             $this->appointment->update([
