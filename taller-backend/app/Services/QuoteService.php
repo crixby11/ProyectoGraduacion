@@ -186,7 +186,7 @@ class QuoteService
             "Estimado/a {$name},\n" .
             "Le compartimos la cotización #{$quote->number}.\n" .
             "Total estimado: L " . number_format($quote->total, 2) . "\n" .
-            "Taller Mecánico - Cotización sujeta a revisión del vehículo."
+            "Taller Mecánico Juárez - Cotización sujeta a revisión del vehículo."
         );
 
         return "https://wa.me/{$phone}?text={$message}";
