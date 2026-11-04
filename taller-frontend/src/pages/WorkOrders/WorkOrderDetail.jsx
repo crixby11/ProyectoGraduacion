@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { ArrowLeft, Plus, FileText, MessageCircle, ChevronDown, ExternalLink, Car, CreditCard, StickyNote, Send, Printer, Trash2, Download, Edit2 } from 'lucide-react'
+import { ArrowLeft, Plus, FileText, MessageCircle, ChevronDown, ExternalLink, Car, CreditCard, StickyNote, Send, Printer, Trash2, Edit2, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getWorkOrder, addService, updateService, addPart, updatePart, removeService, removePart, changeStatus, updateWorkOrder, getNotes, addNote, getWorkOrderPdf } from '../../api/workOrders'
 import { getInvoicePdf } from '../../api/invoices'
@@ -17,6 +17,8 @@ import StatusBadge from '../../components/ui/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import CashChange from '../../components/ui/CashChange'
+import PdfPreviewModal from '../../components/ui/PdfPreviewModal'
+import { usePdfPreview } from '../../hooks/usePdfPreview'
 import { paymentPayload } from '../../utils/payments'
 
 import { fmtDate, fmtDateTime, fmtMoney } from '../../utils/date'
@@ -274,19 +276,12 @@ export default function WorkOrderDetail() {
     onError: (e) => toast.error(e.response?.data?.message ?? 'Error'),
   })
 
-  const downloadOtPdf = async () => {
-    try {
-      const res = await getWorkOrderPdf(id)
-      const url = URL.createObjectURL(res.data)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `OT-${wo.number}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      toast.error('Error al generar PDF')
-    }
-  }
+  const pdf = usePdfPreview()
+  const previewOtPdf = () => pdf.open({
+    title: `Orden de trabajo ${wo.number}`,
+    filename: `OT-${wo.number}.pdf`,
+    fetch: () => getWorkOrderPdf(id),
+  })
 
   const openWhatsApp = async () => {
     if (wo?.invoice) {
@@ -295,19 +290,11 @@ export default function WorkOrderDetail() {
     }
   }
 
-  const downloadInvoicePdf = async () => {
-    try {
-      const res = await getInvoicePdf(wo.invoice.id)
-      const url = URL.createObjectURL(res.data)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `factura-${wo.invoice.number}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      toast.error('Error al generar PDF de factura')
-    }
-  }
+  const previewInvoicePdf = () => pdf.open({
+    title: `Factura ${wo.invoice.number}`,
+    filename: `factura-${wo.invoice.number}.pdf`,
+    fetch: () => getInvoicePdf(wo.invoice.id),
+  })
 
   if (isLoading) return <div className="flex items-center justify-center py-24 text-gray-400">Cargando...</div>
   if (!wo) return null
@@ -385,8 +372,8 @@ export default function WorkOrderDetail() {
             )}
           </div>
 
-          <button onClick={downloadOtPdf} className="btn-secondary" title="Descargar OT en PDF">
-            <Printer size={15} /> Imprimir OT
+          <button onClick={previewOtPdf} className="btn-secondary" title="Ver la orden para imprimir o descargar">
+            <Printer size={15} /> Ver / Imprimir OT
           </button>
 
           {!wo.invoice ? (
@@ -460,8 +447,8 @@ export default function WorkOrderDetail() {
                 <h3 className="font-semibold text-gray-800">Factura {wo.invoice.number}</h3>
                 <div className="flex items-center gap-1">
                   <StatusBadge status={wo.invoice.status} />
-                  <button onClick={downloadInvoicePdf} className="btn-ghost p-1.5 ml-1" title="Descargar PDF de factura">
-                    <Download size={14} />
+                  <button onClick={previewInvoicePdf} className="btn-ghost p-1.5 ml-1" title="Ver factura (imprimir o descargar)">
+                    <Eye size={14} />
                   </button>
                 </div>
               </div>
@@ -1248,6 +1235,7 @@ export default function WorkOrderDetail() {
         </form>
       </Modal>
 
+      <PdfPreviewModal preview={pdf.preview} onClose={pdf.close} />
     </div>
   )
 }

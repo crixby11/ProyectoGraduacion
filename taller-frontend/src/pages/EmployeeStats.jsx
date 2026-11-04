@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -10,21 +10,10 @@ import { getEmployeeStats, downloadEmployeeStatsReport } from '../api/employees'
 import { fmtMoney } from '../utils/date'
 import PageHeader from '../components/ui/PageHeader'
 import ReportMenu from '../components/ui/ReportMenu'
-import { saveBlob, todayStamp } from '../utils/download'
+import RangeFilter from '../components/reports/RangeFilter'
+import { DEFAULT_RANGE, rangeParams } from '../components/reports/range'
 
-const PERIODS = [
-  { value: 'month',   label: 'Este mes' },
-  { value: 'quarter', label: 'Últimos 3 meses' },
-  { value: 'half',    label: 'Últimos 6 meses' },
-  { value: 'year',    label: 'Este año' },
-]
-
-const MONTHS_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
-const fmtMonth = (yyyyMm) => {
-  if (!yyyyMm) return ''
-  const [y, m] = yyyyMm.split('-')
-  return `${MONTHS_ES[parseInt(m, 10) - 1]} ${y.slice(2)}`
-}
+const GROUP_LABEL = { day: 'día', week: 'semana', month: 'mes' }
 const fmtH = (n) => `${Number(n ?? 0).toFixed(1)} h`
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16']
@@ -73,34 +62,36 @@ function RankCard({ rank, employee, metric, metricLabel, metricFmt }) {
 }
 
 export default function EmployeeStats() {
-  const [period, setPeriod] = useState('month')
+  const [range, setRange] = useState(DEFAULT_RANGE)
   const [chartMetric, setChartMetric] = useState('revenue')
+  const params = rangeParams(range)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['employee-stats', period],
-    queryFn: () => getEmployeeStats({ period }).then((r) => r.data),
+    queryKey: ['employee-stats', params],
+    queryFn: () => getEmployeeStats(params).then((r) => r.data),
+    placeholderData: keepPreviousData,
   })
 
-  const ranking = data?.ranking ?? []
-  const monthlyTrend = data?.monthly_trend ?? []
+  const ranking = useMemo(() => data?.ranking ?? [], [data])
+  const trendRows = useMemo(() => data?.trend ?? [], [data])
 
-  /* Transformar tendencia mensual a formato recharts:
-     [{ month, Empleado1: n, Empleado2: n, ... }] */
+  /* Transformar la tendencia a formato recharts:
+     [{ month: etiqueta, Empleado1: n, Empleado2: n, ... }] */
   const { trendData, trendEmployees } = useMemo(() => {
-    const months = [...new Set(monthlyTrend.map((r) => r.month))].sort()
-    const employees = [...new Map(monthlyTrend.map((r) => [r.employee_id, r.name])).entries()]
+    const buckets = [...new Map(trendRows.map((r) => [r.bucket, r.label])).entries()].sort(([a], [b]) => a.localeCompare(b))
+    const employees = [...new Map(trendRows.map((r) => [r.employee_id, r.name])).entries()]
 
-    const trendData = months.map((m) => {
-      const row = { month: fmtMonth(m) }
+    const trendData = buckets.map(([bucket, label]) => {
+      const row = { month: label }
       employees.forEach(([eid, ename]) => {
-        const entry = monthlyTrend.find((r) => r.month === m && r.employee_id === eid)
+        const entry = trendRows.find((r) => r.bucket === bucket && r.employee_id === eid)
         const value = chartMetric === 'revenue' ? entry?.revenue : chartMetric === 'hours' ? entry?.hours : entry?.ot_count
         row[ename] = Number(value ?? 0)
       })
       return row
     })
     return { trendData, trendEmployees: employees.map(([, n]) => n) }
-  }, [monthlyTrend, chartMetric])
+  }, [trendRows, chartMetric])
 
   /* KPI totales del período */
   const totals = useMemo(() => ({
@@ -117,29 +108,15 @@ export default function EmployeeStats() {
         icon={BarChart2}
         subtitle="Productividad y rendimiento del equipo"
         action={
-          <div className="flex items-center gap-3">
-          <ReportMenu onGenerate={async (format) => {
-            const res = await downloadEmployeeStatsReport({ period, format })
-            saveBlob(res.data, `reporte-rendimiento-empleados-${todayStamp()}.${format}`)
-          }} />
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-            {PERIODS.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => setPeriod(p.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  period === p.value
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-          </div>
+          <ReportMenu
+            title="Reporte de rendimiento de empleados"
+            fileBase="reporte-rendimiento-empleados"
+            onFetch={async (format) => (await downloadEmployeeStatsReport({ ...params, format })).data}
+          />
         }
       />
+
+      <RangeFilter value={range} onChange={setRange} info={data?.range} />
 
       {/* KPIs globales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -230,7 +207,7 @@ export default function EmployeeStats() {
       {trendData.length > 0 && (
         <div className="card p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-800">Tendencia mensual (últimos 6 meses)</h3>
+            <h3 className="font-semibold text-gray-800">Tendencia por {GROUP_LABEL[data?.range?.group] ?? 'período'}</h3>
             <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
               {[
                 { value: 'revenue', label: 'Ingresos' },

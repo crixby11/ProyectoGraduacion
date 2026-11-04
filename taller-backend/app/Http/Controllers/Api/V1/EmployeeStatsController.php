@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Services\ReportService;
+use App\Support\ReportRange;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,72 +15,33 @@ class EmployeeStatsController extends Controller
 
     /**
      * Estadísticas globales: ranking y comparativa de todos los empleados.
-     * Query param: period = month | quarter | half | year  (default: month)
+     * Query params: los de ReportRange (preset, from, to, group).
      */
     public function index(Request $request)
     {
-        $period  = $request->get('period', 'month');
-        $from    = $this->reports->employeeFrom($period);
-
-        $nameSql = "TRIM(CONCAT(
-            e.first_name, ' ',
-            COALESCE(e.second_name, ''), ' ',
-            e.last_name, ' ',
-            COALESCE(e.second_last_name, '')
-        ))";
-
-        $ranking = $this->reports->employeeRanking($from);
-
-        // Tendencia mensual de ingresos (últimos 6 meses, todos los empleados)
-        $monthlyTrend = DB::table('wo_services as ws')
-            ->join('work_orders as wo', function ($j) {
-                $j->on('wo.id', '=', 'ws.work_order_id')
-                  ->whereNull('wo.deleted_at');
-            })
-            ->join('employees as e', function ($j) {
-                $j->on('e.id', '=', 'ws.employee_id')
-                  ->whereNull('e.deleted_at')
-                  ->where('e.active', true);
-            })
-            ->where('wo.received_at', '>=', now()->subMonths(5)->startOfMonth()->toDateString())
-            ->select(
-                DB::raw("DATE_FORMAT(wo.received_at, '%Y-%m') as month"),
-                DB::raw("$nameSql as name"),
-                'e.id as employee_id',
-                DB::raw('COUNT(DISTINCT wo.id) as ot_count'),
-                DB::raw('COALESCE(SUM(ws.subtotal), 0) as revenue'),
-                DB::raw('COALESCE(SUM(ws.hours), 0) as hours')
-            )
-            ->groupBy('month', 'e.id', 'e.first_name', 'e.second_name', 'e.last_name', 'e.second_last_name')
-            ->orderBy('month')
-            ->get();
+        $range = ReportRange::fromInput($request->validate(ReportRange::rules()));
 
         return response()->json([
-            'ranking'       => $ranking,
-            'monthly_trend' => $monthlyTrend,
-            'period'        => $period,
-            'from'          => $from,
+            'range'   => $range->toArray(),
+            'ranking' => $this->reports->employeeRanking($range->from, $range->to),
+            'trend'   => $this->reports->employeeTrend($range),
         ]);
     }
 
     /**
      * Reporte descargable de rendimiento de empleados (PDF o CSV): ranking del
-     * período y el detalle de servicios trabajados por cada empleado.
-     * Query params: period = month | quarter | half | year, format = pdf | csv
+     * rango y el detalle de servicios trabajados por cada empleado.
+     * Query params: los de ReportRange y format = pdf | csv
      */
     public function export(Request $request)
     {
-        $request->validate([
-            'period' => 'nullable|in:month,quarter,half,year',
-            'format' => 'required|in:pdf,csv',
-        ]);
+        $input = $request->validate(ReportRange::rules() + ['format' => 'required|in:pdf,csv']);
+        $rangeObj = ReportRange::fromInput($input);
 
-        $period = $request->get('period', 'month');
-        $from = $this->reports->employeeFrom($period);
-        $periodLabel = $this->reports->employeePeriodLabel($period);
-        $range = $this->reports->date($from) . ' al ' . now()->format('d/m/Y');
-        $ranking = $this->reports->employeeRanking($from);
-        $work = $this->reports->employeeWorkDetail($from);
+        $periodLabel = $rangeObj->label;
+        $range = $rangeObj->rangeText();
+        $ranking = $this->reports->employeeRanking($rangeObj->from, $rangeObj->to);
+        $work = $this->reports->employeeWorkDetail($rangeObj->from, $rangeObj->to);
         $totals = [
             'revenue' => $ranking->sum('total_revenue'),
             'hours'   => $ranking->sum('total_hours'),

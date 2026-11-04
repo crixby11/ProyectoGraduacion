@@ -59,7 +59,7 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
-        return response()->json($invoice->load(['workOrder.services', 'workOrder.parts', 'customer', 'payments']));
+        return response()->json($invoice->load(['workOrder.services', 'workOrder.parts', 'customer', 'payments', 'issuer:id,name']));
     }
 
     public function generate(Request $request, WorkOrder $workOrder)

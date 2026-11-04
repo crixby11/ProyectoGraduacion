@@ -235,7 +235,7 @@ class WorkOrderController extends Controller
         $pdf = Pdf::loadView('pdfs.work_order', [
             'wo' => $workOrder,
             'settings' => Setting::all_map(),
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper(\App\Support\PdfPaper::HALF_LETTER, 'portrait');
 
         return $pdf->download("OT-{$workOrder->number}.pdf");
     }

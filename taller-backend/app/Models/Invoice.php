@@ -29,7 +29,7 @@ class Invoice extends Model
         'taxed_18_amount', 'tax_18_amount',
         'tax_percent', 'tax_amount',
         'total', 'amount_paid', 'balance',
-        'notes', 'pdf_path', 'issued_at', 'paid_at',
+        'notes', 'pdf_path', 'issued_at', 'issued_by', 'paid_at',
     ];
 
     protected $casts = [
@@ -60,6 +60,12 @@ class Invoice extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** Usuario que emitió la factura. */
+    public function issuer()
+    {
+        return $this->belongsTo(User::class, 'issued_by');
     }
 
     public function payments()

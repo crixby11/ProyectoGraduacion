@@ -108,22 +108,34 @@ class PricingAndTaxTest extends ApiTestCase
             ->assertStatus(422);
     }
 
-    public function test_quote_pdf_only_lists_the_tax_lines_that_apply(): void
+    public function test_quote_pdf_always_shows_the_full_tax_breakdown(): void
     {
         $quote = $this->quoteWithSubtotal(1000, 1000);
         $render = fn (Quote $q) => view('pdfs.quote', [
-            'quote' => $q->fresh()->load(['services', 'parts', 'customer']),
+            'quote' => $q->fresh()->load(['services', 'parts', 'customer', 'employee']),
             'settings' => \App\Models\Setting::all_map(),
         ])->render();
+        // Monto de una fila de totales: "<td class="lbl">ETIQUETA</td>...<td class="amt">MONTO</td>"
+        $amount = function (string $html, string $label) {
+            preg_match('/' . preg_quote($label, '/') . '<\/td><td class="cur">L\.<\/td><td class="amt">([^<]+)</', $html, $m);
+
+            return $m[1] ?? null;
+        };
+
+        $fmt = fn ($v) => number_format((float) $v, 2);
+        $sub = $quote->fresh()->subtotal;
+        $this->assertGreaterThan(0, $sub);
 
         $standard = $render($quote);
-        $this->assertStringContainsString('Gravado 15%', $standard);
-        $this->assertStringNotContainsString('Gravado 18%', $standard);
-        $this->assertStringNotContainsString('Exonerado', $standard);
+        $this->assertSame($fmt($sub), $amount($standard, 'SUB-TOTAL GRAVADO 15%'));
+        $this->assertSame($fmt($sub * 0.15), $amount($standard, '15% I.S.V.'));
+        $this->assertSame('0.00', $amount($standard, 'SUB-TOTAL EXONERADO'));
+        $this->assertSame($fmt($sub * 1.15), $amount($standard, 'TOTAL ESTIMADO'));
 
         app(QuoteService::class)->update($quote, ['tax_mode' => 'exonerado']);
         $exempt = $render($quote);
-        $this->assertStringContainsString('Exonerado', $exempt);
-        $this->assertStringNotContainsString('Gravado 15%', $exempt);
+        $this->assertSame($fmt($sub), $amount($exempt, 'SUB-TOTAL EXONERADO'));
+        $this->assertSame('0.00', $amount($exempt, '15% I.S.V.'));
+        $this->assertSame($fmt($sub), $amount($exempt, 'TOTAL ESTIMADO'));
     }
 }

@@ -7,20 +7,23 @@ import {
 import logo from '../../assets/logo.jpeg'
 
 /* ── Grupos de navegación ──────────────────────────────────── */
+// El grupo "Flujo del taller" sigue el orden real de atención:
+// cita → cotización → orden de trabajo → factura → pago.
 const navGroups = [
   {
     items: [
-      { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
-      { to: '/reports', icon: LineChart, label: 'Reportes' },
+      { to: '/calendar', icon: Calendar,        label: 'Calendario' },
+      { to: '/',         icon: LayoutDashboard, label: 'Dashboard', end: true },
     ],
   },
   {
-    label: 'Operaciones',
+    label: 'Flujo del taller',
     items: [
-      { to: '/quotes',        icon: Calculator,     label: 'Cotizaciones' },
+      { to: '/appointments',  icon: CalendarCheck, label: 'Citas' },
+      { to: '/quotes',        icon: Calculator,    label: 'Cotizaciones' },
       { to: '/work-orders',   icon: ClipboardList, label: 'Órdenes de Trabajo' },
-      { to: '/appointments',  icon: CalendarCheck,  label: 'Citas' },
-      { to: '/calendar',      icon: Calendar,       label: 'Calendario' },
+      { to: '/invoices',      icon: FileText,      label: 'Facturación' },
+      { to: '/payments',      icon: DollarSign,    label: 'Pagos' },
     ],
   },
   {
@@ -28,19 +31,23 @@ const navGroups = [
     items: [
       { to: '/customers',  icon: Users,    label: 'Clientes' },
       { to: '/vehicles',   icon: Car,      label: 'Vehículos' },
-      { to: '/employees',       icon: Wrench,    label: 'Empleados' },
-      { to: '/employees/stats', icon: BarChart2,  label: 'Rendimiento' },
       { to: '/services',   icon: Settings, label: 'Servicios' },
+      { to: '/employees',  icon: Wrench,   label: 'Empleados', end: true },
     ],
   },
   {
-    label: 'Finanzas',
+    label: 'Inventario y compras',
     items: [
-      { to: '/inventory', icon: Package,   label: 'Inventario' },
-      { to: '/suppliers', icon: Truck,     label: 'Proveedores' },
+      { to: '/inventory',       icon: Package,      label: 'Inventario' },
+      { to: '/suppliers',       icon: Truck,        label: 'Proveedores' },
       { to: '/purchase-orders', icon: ShoppingCart, label: 'Órdenes de Compra' },
-      { to: '/invoices',  icon: FileText,  label: 'Facturación' },
-      { to: '/payments',  icon: DollarSign, label: 'Pagos' },
+    ],
+  },
+  {
+    label: 'Análisis',
+    items: [
+      { to: '/reports',         icon: LineChart, label: 'Reportes' },
+      { to: '/employees/stats', icon: BarChart2, label: 'Rendimiento' },
     ],
   },
 ]

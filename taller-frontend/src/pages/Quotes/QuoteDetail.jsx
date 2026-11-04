@@ -16,6 +16,8 @@ import { useConvertQuoteToWorkOrder } from '../../hooks/useConvertQuoteToWorkOrd
 import StatusBadge from '../../components/ui/StatusBadge'
 import Modal from '../../components/ui/Modal'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
+import PdfPreviewModal from '../../components/ui/PdfPreviewModal'
+import { usePdfPreview } from '../../hooks/usePdfPreview'
 import { fmtDate, fmtMoney } from '../../utils/date'
 
 const STATUSES = ['pendiente', 'aprobada', 'rechazada']
@@ -135,19 +137,12 @@ export default function QuoteDetail() {
 
   const convert = useConvertQuoteToWorkOrder({})
 
-  const downloadPdf = async () => {
-    try {
-      const res = await getQuotePdf(id)
-      const url = URL.createObjectURL(res.data)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `cotizacion-${quote.number}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      toast.error('Error al generar PDF')
-    }
-  }
+  const pdf = usePdfPreview()
+  const previewPdf = () => pdf.open({
+    title: `Cotización ${quote.number}`,
+    filename: `cotizacion-${quote.number}.pdf`,
+    fetch: () => getQuotePdf(id),
+  })
 
   const openWhatsApp = async () => {
     const res = await getQuoteWhatsappLink(id)
@@ -221,8 +216,8 @@ export default function QuoteDetail() {
             </div>
           )}
 
-          <button onClick={downloadPdf} className="btn-secondary" title="Descargar cotización en PDF">
-            <Printer size={15} /> Imprimir
+          <button onClick={previewPdf} className="btn-secondary" title="Ver la cotización para imprimir o descargar">
+            <Printer size={15} /> Ver / Imprimir
           </button>
 
           <button onClick={openWhatsApp} className="btn-secondary">
@@ -622,6 +617,8 @@ export default function QuoteDetail() {
           setConfirmDel(null)
         }}
       />
+
+      <PdfPreviewModal preview={pdf.preview} onClose={pdf.close} />
     </div>
   )
 }

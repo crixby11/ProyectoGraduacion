@@ -3,282 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <title>OT {{ $wo->number }}</title>
+    @include('pdfs.partials.doc_style')
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; border: 0; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1a1a1a; }
-
-        .page { border: 1.5px solid #1a1a1a; margin: 14px; }
-
-        /* Encabezado */
-        .header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1.5px solid #1a1a1a; }
-        .header-left { display: flex; gap: 10px; }
-        .header-logo { width: 52px; height: 52px; object-fit: contain; }
-        .shop-name { font-size: 15px; font-weight: bold; letter-spacing: 0.2px; }
-        .shop-meta { font-size: 8.5px; color: #333; margin-top: 3px; line-height: 1.5; max-width: 260px; }
-        .header-right { text-align: right; }
-        .doc-title { font-size: 14px; font-weight: bold; letter-spacing: 0.5px; }
-        .doc-number { font-size: 14px; font-weight: bold; color: #b91c1c; margin-top: 4px; font-family: monospace; }
-        .doc-date { font-size: 9px; color: #333; margin-top: 6px; line-height: 1.6; }
-        .badge { display: inline-block; margin-top: 3px; padding: 2px 7px; border-radius: 3px; font-size: 8px; font-weight: bold; letter-spacing: 0.3px; }
-        .badge-recibido    { background: #e2e8f0; color: #475569; }
-        .badge-diagnostico { background: #fef3c7; color: #92400e; }
-        .badge-en_progreso { background: #dbeafe; color: #1e40af; }
-        .badge-listo       { background: #d1fae5; color: #065f46; }
-        .badge-entregado   { background: #dcfce7; color: #14532d; }
-        .badge-cancelado   { background: #fee2e2; color: #991b1b; }
-
-        /* Franja cliente / vehículo / técnico */
-        .client-bar { display: flex; flex-wrap: wrap; border-bottom: 1.5px solid #1a1a1a; }
-        .client-bar .box { flex: 1; min-width: 120px; padding: 6px 14px; font-size: 9.5px; }
-        .client-bar .box + .box { border-left: 1px solid #94a3b8; }
-        .client-bar .lbl { color: #555; font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; }
-        .client-bar .val { font-weight: 600; margin-top: 1px; }
-
-        /* Secciones de texto (problema / inspección / solución / pendientes) */
-        .text-section { padding: 8px 16px; border-bottom: 1px solid #cbd5e1; }
-        .text-section .lbl { font-size: 8.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; color: #1a1a1a; margin-bottom: 4px; }
-        .text-section .body { font-size: 9.5px; line-height: 1.5; white-space: pre-wrap; color: #333; }
-
-        /* Tabla de ítems */
-        .items-section { padding: 10px 16px; border-bottom: 1.5px solid #1a1a1a; }
-        .items-section .lbl { font-size: 8.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
-        table.items { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        table.items:last-child { margin-bottom: 0; }
-        table.items thead th {
-            background: #eef2f7; color: #1a1a1a; padding: 5px 8px; text-align: left;
-            font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.3px;
-            border-bottom: 1.5px solid #1a1a1a;
-        }
-        table.items td { padding: 4.5px 8px; font-size: 9.5px; border-bottom: 1px solid #e2e8f0; }
-        table.items .text-right { text-align: right; }
-        table.items tfoot td { padding: 4px 8px; font-size: 9px; font-weight: bold; border-top: 1px solid #94a3b8; border-bottom: none; }
-
-        /* Totales */
-        .totals-wrap { display: flex; justify-content: flex-end; padding: 10px 16px; border-bottom: 1.5px solid #1a1a1a; }
-        .totals-box { width: 240px; }
-        .totals-box table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .totals-box td { padding: 2.5px 0; font-size: 9.5px; border: none; }
-        .totals-box .label { color: #333; }
-        .totals-box .amount { text-align: right; font-family: monospace; }
-        .totals-box .grand td { font-size: 13px; font-weight: bold; border-top: 1.5px solid #1a1a1a; padding-top: 5px; }
-
-        /* Bitácora */
-        .notes-section { padding: 8px 16px; border-bottom: 1.5px solid #1a1a1a; }
-        .notes-section .lbl { font-size: 8.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
-        .note-item { margin-bottom: 7px; padding-bottom: 7px; border-bottom: 1px dashed #e2e8f0; }
-        .note-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .note-meta { font-size: 8.5px; color: #64748b; margin-bottom: 2px; }
-        .note-body { font-size: 9.5px; white-space: pre-wrap; line-height: 1.4; }
-
-        /* Firmas */
-        .sig-section { display: flex; padding: 16px; }
-        .sig-box { flex: 1; padding-right: 20px; font-size: 8.5px; }
-        .sig-box:last-child { padding-right: 0; }
-        .sig-box .sig-line { border-top: 1px solid #1a1a1a; margin-top: 24px; margin-bottom: 4px; }
-        .sig-box .sig-label { color: #555; text-align: center; }
-
-        .bottom-note { padding: 6px 16px 12px; font-size: 8px; color: #555; text-align: center; border-top: 1px solid #cbd5e1; }
+        .log-item { padding: 2pt 6pt; border-bottom: 0.5pt dashed #bbb; }
+        .log-item:last-child { border-bottom: none; }
+        .log-meta { font-size: 6pt; color: #555; }
     </style>
 </head>
 <body>
+@php
+    $s = $settings;
+    $received = $wo->received_at ?? $wo->created_at ?? now();
+    $statusLabel = [
+        'recibido' => 'Recibido', 'diagnostico' => 'En diagnóstico', 'en_progreso' => 'En progreso',
+        'listo' => 'Listo para entregar', 'entregado' => 'Entregado', 'cancelado' => 'Cancelado',
+    ][$wo->status] ?? $wo->status;
+    $vehicle = trim(collect([$wo->vehicle_plate, $wo->vehicle_brand, $wo->vehicle_model, $wo->vehicle_year])->filter()->implode(' '));
+    $vehicleExtra = collect([
+        $wo->vehicle_color ? 'Color: ' . $wo->vehicle_color : null,
+        $wo->vehicle_vin ? 'VIN: ' . $wo->vehicle_vin : null,
+    ])->filter()->implode(' · ');
+    $L = fn ($v) => number_format((float) $v, 2);
+    $emptyRows = max(0, 5 - $wo->services->count() - $wo->parts->count());
 
-    <div class="page">
+    $meta = ['Recibido: <b>' . e($received->format('h:i A')) . '</b> · Estado: <b>' . e($statusLabel) . '</b>'];
+    $meta[] = $wo->delivered_at
+        ? 'Entregado: <b>' . e($wo->delivered_at->format('d/m/Y h:i A')) . '</b>'
+        : 'Entrega prometida: <b>' . e($wo->promised_at?->format('d/m/Y') ?? '—') . '</b>';
+@endphp
 
-        {{-- Encabezado --}}
-        <div class="header">
-            <div class="header-left">
-                @php
-                    $logoPath = public_path('img/logo.jpeg');
-                    $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : null;
-                @endphp
-                @if($logoData)
-                <img class="header-logo" src="data:image/jpeg;base64,{{ $logoData }}" alt="Logo">
-                @endif
-                <div>
-                    <div class="shop-name">{{ mb_strtoupper($settings['shop_name'] ?? 'TALLER MECÁNICO', 'UTF-8') }}</div>
-                    <div class="shop-meta">
-                        @if(!empty($settings['shop_address'])){{ $settings['shop_address'] }}@if(!empty($settings['shop_city'])), {{ $settings['shop_city'] }}@endif<br>@endif
-                        @if(!empty($settings['shop_phone']))Cel.: {{ $settings['shop_phone'] }}@endif
-                        @if(!empty($settings['shop_email'])) &nbsp;·&nbsp; {{ $settings['shop_email'] }}@endif
-                    </div>
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="doc-title">ORDEN DE TRABAJO</div>
-                <div class="doc-number">N° {{ $wo->number }}</div>
-                <div class="doc-date">
-                    Recibido: {{ $wo->received_at?->format('d/m/Y H:i') ?? '—' }}<br>
-                    Entrega prometida: {{ $wo->promised_at?->format('d/m/Y') ?? '—' }}<br>
-                    <span class="badge badge-{{ $wo->status }}">{{ strtoupper(str_replace('_', ' ', $wo->status)) }}</span>
-                </div>
-            </div>
-        </div>
+@include('pdfs.partials.doc_header', [
+    'title' => 'ORDEN DE TRABAJO',
+    'date' => $received,
+    'dateLabel' => 'FECHA DE RECEPCIÓN',
+    'meta' => $meta,
+])
 
-        {{-- Franja cliente / vehículo / técnico --}}
-        <div class="client-bar">
-            <div class="box">
-                <div class="lbl">Cliente</div>
-                <div class="val">{{ $wo->customer_name ?? '—' }}</div>
-            </div>
-            <div class="box">
-                <div class="lbl">Teléfono</div>
-                <div class="val">{{ $wo->customer_phone ?? '—' }}</div>
-            </div>
-            @php
-                $vehicleLine = collect([$wo->vehicle_brand, $wo->vehicle_model, $wo->vehicle_year])->filter()->implode(' ');
-                $vehicleLine = collect([$wo->vehicle_plate, $vehicleLine])->filter()->implode(' · ');
-            @endphp
-            <div class="box">
-                <div class="lbl">Vehículo</div>
-                <div class="val">{{ $vehicleLine ?: '—' }}</div>
-            </div>
-            <div class="box">
-                <div class="lbl">Técnico asignado</div>
-                <div class="val">{{ $wo->employee?->name ?? 'Sin asignar' }}</div>
-            </div>
-        </div>
+{{-- Cliente y vehículo --}}
+<table class="client">
+    <tr><td class="lbl">CLIENTE:</td><td class="line">{{ $wo->customer_name }}</td></tr>
+    <tr><td class="lbl">TELÉFONO:</td><td class="line">{{ $wo->customer_phone }}</td></tr>
+    <tr><td class="lbl">VEHÍCULO:</td><td class="line">{{ $vehicle }}</td></tr>
+    @if($vehicleExtra)<tr><td></td><td class="extra">{{ $vehicleExtra }}</td></tr>@endif
+    <tr><td class="lbl">TÉCNICO:</td><td class="line">{{ $wo->employee?->name ?? 'Sin asignar' }}</td></tr>
+</table>
 
-        {{-- Problema reportado --}}
-        @if($wo->problem)
-        <div class="text-section">
-            <div class="lbl">Problema reportado por el cliente</div>
-            <div class="body">{{ $wo->problem }}</div>
-        </div>
+@php
+    $sections = array_filter([
+        'Problema reportado' => $wo->problem,
+        'Diagnóstico' => $wo->inspection,
+        'Solución aplicada' => $wo->solution,
+        'Pendientes' => $wo->comments,
+    ]);
+@endphp
+@if($sections)
+<table class="client">
+    @foreach($sections as $title => $text)
+    <tr>
+        <td class="lbl" style="width:70pt">{{ mb_strtoupper($title, 'UTF-8') }}:</td>
+        <td class="line" style="white-space:pre-wrap">{{ $text }}</td>
+    </tr>
+    @endforeach
+</table>
+@endif
+
+{{-- Detalle --}}
+<table class="items">
+    <thead>
+        <tr>
+            <th style="width:30pt">CANT.</th>
+            <th>DESCRIPCIÓN</th>
+            <th style="width:58pt">PRECIO<br>UNITARIO</th>
+            <th style="width:64pt">TOTAL</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if($wo->services->isNotEmpty())
+        <tr class="group"><td colspan="4">SERVICIOS / MANO DE OBRA (horas)</td></tr>
+        @foreach($wo->services as $svc)
+        <tr>
+            <td class="c">{{ rtrim(rtrim(number_format($svc->hours, 2), '0'), '.') }}</td>
+            <td>{{ $svc->service_name }}@if($svc->employee)<br><span class="sub">Técnico: {{ $svc->employee->name }}</span>@endif</td>
+            <td class="r">{{ $L($svc->hourly_rate) }}</td>
+            <td class="r">{{ $L($svc->subtotal) }}</td>
+        </tr>
+        @endforeach
         @endif
-
-        {{-- Inspección --}}
-        @if($wo->inspection)
-        <div class="text-section">
-            <div class="lbl">Inspección / diagnóstico</div>
-            <div class="body">{{ $wo->inspection }}</div>
-        </div>
+        @if($wo->parts->isNotEmpty())
+        <tr class="group"><td colspan="4">REPUESTOS Y MATERIALES</td></tr>
+        @foreach($wo->parts as $part)
+        <tr>
+            <td class="c">{{ $part->quantity }}</td>
+            <td>{{ $part->part_name }}@if($part->part_sku)<br><span class="sub">SKU: {{ $part->part_sku }}</span>@endif</td>
+            <td class="r">{{ $L($part->unit_price) }}</td>
+            <td class="r">{{ $L($part->subtotal) }}</td>
+        </tr>
+        @endforeach
         @endif
+        @for($i = 0; $i < $emptyRows; $i++)
+        <tr><td></td><td></td><td></td><td></td></tr>
+        @endfor
+    </tbody>
+</table>
 
-        {{-- Solución --}}
-        @if($wo->solution)
-        <div class="text-section">
-            <div class="lbl">Solución aplicada</div>
-            <div class="body">{{ $wo->solution }}</div>
-        </div>
-        @endif
-
-        {{-- Pendientes --}}
-        @if($wo->comments)
-        <div class="text-section" style="border-bottom: 1.5px solid #1a1a1a;">
-            <div class="lbl">Pendientes</div>
-            <div class="body">{{ $wo->comments }}</div>
-        </div>
-        @endif
-
-        {{-- Servicios y repuestos --}}
-        @if($wo->services->isNotEmpty() || $wo->parts->isNotEmpty())
-        <div class="items-section">
-            @if($wo->services->isNotEmpty())
-            <div class="lbl">Servicios / Mano de obra</div>
-            <table class="items">
-                <thead>
-                    <tr>
-                        <th>Descripción</th>
-                        <th>Técnico</th>
-                        <th class="text-right" style="width:55px">Horas</th>
-                        <th class="text-right" style="width:75px">Tarifa/hr</th>
-                        <th class="text-right" style="width:85px">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($wo->services as $svc)
-                    <tr>
-                        <td>{{ $svc->service_name }}</td>
-                        <td>{{ $svc->employee?->name ?? '—' }}</td>
-                        <td class="text-right">{{ number_format($svc->hours, 2) }}</td>
-                        <td class="text-right">L {{ number_format($svc->hourly_rate, 2) }}</td>
-                        <td class="text-right">L {{ number_format($svc->subtotal, 2) }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    <tr><td colspan="4">Subtotal servicios</td><td class="text-right">L {{ number_format($wo->subtotal_services, 2) }}</td></tr>
-                </tfoot>
+{{-- Firmas | totales --}}
+<table class="foot">
+    <tr>
+        <td class="left-col" style="width:52%">
+            <div class="sig" style="margin-top:14pt"></div>
+            <div class="sig-lbl">TÉCNICO RESPONSABLE</div>
+            <div class="sig" style="margin-top:14pt"></div>
+            <div class="sig-lbl">RECIBIDO CONFORME (CLIENTE)</div>
+        </td>
+        <td>
+            <table class="totals">
+                <tr><td class="lbl">SERVICIOS</td><td class="cur">L.</td><td class="amt">{{ $L($wo->subtotal_services) }}</td></tr>
+                <tr><td class="lbl">REPUESTOS</td><td class="cur">L.</td><td class="amt">{{ $L($wo->subtotal_parts) }}</td></tr>
+                <tr class="grand"><td class="lbl">TOTAL</td><td class="cur">L.</td><td class="amt">{{ $L($wo->total) }}</td></tr>
             </table>
-            @endif
+            <div class="note" style="padding:0 4pt">Total sin impuestos. El I.S.V. se aplica en la factura.</div>
+        </td>
+    </tr>
+</table>
 
-            @if($wo->parts->isNotEmpty())
-            <div class="lbl">Repuestos y materiales</div>
-            <table class="items">
-                <thead>
-                    <tr>
-                        <th>Repuesto</th>
-                        <th style="width:80px">SKU</th>
-                        <th class="text-right" style="width:45px">Cant.</th>
-                        <th class="text-right" style="width:75px">P. Unit.</th>
-                        <th class="text-right" style="width:85px">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($wo->parts as $part)
-                    <tr>
-                        <td>{{ $part->part_name }}</td>
-                        <td>{{ $part->part_sku ?? '—' }}</td>
-                        <td class="text-right">{{ $part->quantity }}</td>
-                        <td class="text-right">L {{ number_format($part->unit_price, 2) }}</td>
-                        <td class="text-right">L {{ number_format($part->subtotal, 2) }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    <tr><td colspan="4">Subtotal repuestos</td><td class="text-right">L {{ number_format($wo->subtotal_parts, 2) }}</td></tr>
-                </tfoot>
-            </table>
-            @endif
-        </div>
-        @endif
-
-        {{-- Totales --}}
-        <div class="totals-wrap">
-            <div class="totals-box">
-                <table>
-                    <tr><td class="label">Servicios</td><td class="amount">L {{ number_format($wo->subtotal_services, 2) }}</td></tr>
-                    <tr><td class="label">Repuestos</td><td class="amount">L {{ number_format($wo->subtotal_parts, 2) }}</td></tr>
-                    <tr class="grand"><td>TOTAL</td><td class="amount">L {{ number_format($wo->total, 2) }}</td></tr>
-                </table>
-            </div>
-        </div>
-
-        {{-- Bitácora de notas --}}
-        @if($wo->notes->isNotEmpty())
-        <div class="notes-section">
-            <div class="lbl">Bitácora interna</div>
-            @foreach($wo->notes as $note)
-            <div class="note-item">
-                <div class="note-meta">{{ $note->user?->name ?? 'Sistema' }} — {{ $note->created_at->format('d/m/Y H:i') }}</div>
-                <div class="note-body">{{ $note->body }}</div>
-            </div>
-            @endforeach
-        </div>
-        @endif
-
-        {{-- Firmas --}}
-        <div class="sig-section">
-            <div class="sig-box">
-                <div class="sig-line"></div>
-                <div class="sig-label">Técnico responsable</div>
-            </div>
-            <div class="sig-box">
-                <div class="sig-line"></div>
-                <div class="sig-label">Recibido conforme — Cliente</div>
-            </div>
-            <div class="sig-box">
-                <div class="sig-line"></div>
-                <div class="sig-label">Fecha de entrega</div>
-            </div>
-        </div>
-
-        <div class="bottom-note">
-            Documento interno — copia técnica, no válido como factura.
-            <div style="margin-top:3px;">Generado el {{ now()->format('d/m/Y H:i') }} · {{ $wo->number }}</div>
-        </div>
-
+@if($wo->notes->isNotEmpty())
+<div class="box">
+    <div class="ttl">BITÁCORA INTERNA</div>
+    @foreach($wo->notes as $note)
+    <div class="log-item">
+        <div class="log-meta">{{ $note->user?->name ?? 'Sistema' }} · {{ $note->created_at->format('d/m/Y h:i A') }}</div>
+        <div class="txt" style="padding:0">{{ $note->body }}</div>
     </div>
+    @endforeach
+</div>
+@endif
 
+<div class="note">Documento interno del taller. No válido como factura.</div>
 </body>
 </html>

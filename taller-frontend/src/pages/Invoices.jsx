@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Download, MessageCircle, ClipboardList, AlertCircle, CheckCircle2, Clock, FileDown, FileText } from 'lucide-react'
-import { fmtDate, fmtDateTime, fmtMoney } from '../utils/date'
-import toast from 'react-hot-toast'
+import { Eye, MessageCircle, ClipboardList, AlertCircle, CheckCircle2, Clock, FileDown, FileText } from 'lucide-react'
+import { fmtDateTime, fmtMoney } from '../utils/date'
 import { getInvoices, getInvoicePdf, getWhatsappLink } from '../api/invoices'
+import { usePdfPreview } from '../hooks/usePdfPreview'
+import PdfPreviewModal from '../components/ui/PdfPreviewModal'
 import PageHeader from '../components/ui/PageHeader'
 import SearchInput from '../components/ui/SearchInput'
 import { Table, Pagination } from '../components/ui/Table'
@@ -57,19 +58,12 @@ export default function Invoices() {
     keepPreviousData: true,
   })
 
-  const downloadPdf = async (invoice) => {
-    try {
-      const res = await getInvoicePdf(invoice.id)
-      const url = URL.createObjectURL(res.data)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `factura-${invoice.number}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      toast.error('Error al generar PDF')
-    }
-  }
+  const pdf = usePdfPreview()
+  const previewPdf = (invoice) => pdf.open({
+    title: `Factura ${invoice.number}`,
+    filename: `factura-${invoice.number}.pdf`,
+    fetch: () => getInvoicePdf(invoice.id),
+  })
 
   const openWhatsApp = async (invoice) => {
     const res = await getWhatsappLink(invoice.id)
@@ -133,8 +127,8 @@ export default function Invoices() {
       width: '80px',
       render: (r) => (
         <div className="flex gap-1">
-          <button onClick={() => downloadPdf(r)} className="btn-ghost p-1.5" title="Descargar PDF">
-            <Download size={15} />
+          <button onClick={() => previewPdf(r)} className="btn-ghost p-1.5" title="Ver factura (imprimir o descargar)">
+            <Eye size={15} />
           </button>
           <button onClick={() => openWhatsApp(r)} className="btn-ghost p-1.5 text-green-600" title="Enviar WhatsApp">
             <MessageCircle size={15} />
@@ -261,6 +255,8 @@ export default function Invoices() {
         />
         <Pagination meta={data} onPageChange={setPage} />
       </div>
+
+      <PdfPreviewModal preview={pdf.preview} onClose={pdf.close} />
     </div>
   )
 }

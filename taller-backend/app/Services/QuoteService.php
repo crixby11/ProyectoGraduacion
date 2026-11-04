@@ -164,12 +164,12 @@ class QuoteService
 
     public function generatePdf(Quote $quote): Response
     {
-        $quote->load(['services', 'parts', 'customer']);
+        $quote->load(['services', 'parts', 'customer', 'employee']);
 
         $pdf = Pdf::loadView('pdfs.quote', [
             'quote' => $quote,
             'settings' => \App\Models\Setting::all_map(),
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper(\App\Support\PdfPaper::HALF_LETTER, 'portrait');
 
         return $pdf->download("cotizacion-{$quote->number}.pdf");
     }

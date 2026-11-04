@@ -48,6 +48,7 @@ class InvoiceService
                 'amount_paid' => 0,
                 'balance' => $workOrder->total,
                 'issued_at' => now(),
+                'issued_by' => auth()->id(),
             ]);
 
             // recalculate() aplica descuento/ISV sobre el subtotal y ajusta
@@ -61,12 +62,12 @@ class InvoiceService
 
     public function generatePdf(Invoice $invoice): Response
     {
-        $invoice->load(['workOrder.services', 'workOrder.parts', 'customer', 'payments']);
+        $invoice->load(['workOrder.services', 'workOrder.parts', 'customer', 'payments', 'issuer:id,name']);
 
         $pdf = Pdf::loadView('pdfs.invoice', [
             'invoice' => $invoice,
             'settings' => Setting::all_map(),
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper(\App\Support\PdfPaper::HALF_LETTER, 'portrait');
 
         return $pdf->download("factura-{$invoice->number}.pdf");
     }
